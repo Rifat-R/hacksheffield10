@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, ShoppingBag, Sparkles, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Heart, ShoppingBag, Sparkles, Share2, ChevronLeft, ChevronRight, ShoppingCart, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { api } from '../lib/api';
+import { useCheckoutStore } from '../state/useCheckoutStore';
 
 // Mock product data
 const MOCK_PRODUCT = {
@@ -71,6 +72,9 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [showAddedNotification, setShowAddedNotification] = useState(false);
+  
+  const { addToCart } = useCheckoutStore();
 
   useEffect(() => {
     loadProduct();
@@ -103,6 +107,12 @@ export default function ProductDetail() {
     setIsSaved(!isSaved);
     // TODO: Implement save to wishlist API call
   };
+  
+  const handleAddToCart = () => {
+    addToCart(product);
+    setShowAddedNotification(true);
+    setTimeout(() => setShowAddedNotification(false), 3000);
+  };
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => 
@@ -118,6 +128,27 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gray-950">
+      {/* Added to Cart Notification */}
+      <AnimatePresence>
+        {showAddedNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] pointer-events-none"
+          >
+            <div className="px-6 py-3 rounded-xl shadow-2xl backdrop-blur-md border-2 bg-green-500/20 border-green-400 text-green-100 flex items-center gap-3">
+              <Check className="w-5 h-5" />
+              <div>
+                <p className="font-bold text-sm">Added to Cart!</p>
+                <p className="text-xs opacity-90">{product.name}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -129,6 +160,11 @@ export default function ProductDetail() {
             <span className="font-medium">Back</span>
           </button>
           <div className="flex items-center gap-2">
+            <Link to="/checkout">
+              <Button size="icon" variant="ghost" className="hover:text-purple-400">
+                <ShoppingCart className="w-5 h-5" />
+              </Button>
+            </Link>
             <Button
               size="icon"
               variant="ghost"
@@ -301,6 +337,15 @@ export default function ProductDetail() {
               <Button
                 size="lg"
                 className="w-full text-base sm:text-lg h-12 sm:h-14 shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all"
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Add to Cart
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full text-base sm:text-lg h-12 sm:h-14 border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500 transition-all"
                 onClick={handleBuyClick}
               >
                 <ShoppingBag className="w-5 h-5" />
