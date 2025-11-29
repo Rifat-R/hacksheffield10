@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 import requests
+from functools import lru_cache
 from supabase_client import SUPABASE_URL, SUPABASE_KEY
 
 products_bp = Blueprint("products", __name__, url_prefix="/")
