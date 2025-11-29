@@ -1,26 +1,12 @@
 from flask import Blueprint, jsonify
 import requests
 from supabase_client import SUPABASE_URL, SUPABASE_KEY
+from services.embedding_client import embed_product
+
 
 products_bp = Blueprint("products", __name__, url_prefix="/")
 
 PRODUCTS_URL = "https://dummyjson.com/products"
-
-
-def parse_product(raw_product: dict) -> dict:
-    """Compatible with supabase 'products' table schema."""
-    images = raw_product.get("images", [])
-    image_url = images[0] if images else None
-
-    return {
-        "external_id": raw_product.get("id"),
-        "name": raw_product.get("title"),
-        "tags": raw_product.get("tags", []),
-        "description": raw_product.get("description"),
-        "price": raw_product.get("price"),
-        "category": raw_product.get("category"),
-        "image_url": image_url,
-    }
 
 
 def _get_raw_products() -> list | tuple:
@@ -33,6 +19,27 @@ def _get_raw_products() -> list | tuple:
         # Fallback to local data if the external API is unreachable.
         print(f"[products] Falling back to mock data: {exc}")
         return "Something went wrong", 500
+
+
+def parse_product(raw_product: dict) -> dict:
+    """Compatible with supabase 'products' table schema."""
+    images = raw_product.get("images", [])
+    image_url = images[0] if images else None
+
+    data = {
+        "external_id": raw_product.get("id"),
+        "name": raw_product.get("title"),
+        "tags": raw_product.get("tags", []),
+        "description": raw_product.get("description"),
+        "price": raw_product.get("price"),
+        "category": raw_product.get("category"),
+        "image_url": image_url,
+    }
+
+    embedding = embed_product(data)
+    data["embedding"] = embedding
+
+    return data
 
 
 def get_products() -> list:
@@ -74,3 +81,9 @@ def list_products():
     """List products from Supabase"""
     products = get_products_from_supabase()
     return jsonify(products)
+
+
+@products_bp.get("/supabase")
+def send_to_supabase():
+    __add_to_supabase()
+    return jsonify({"status": "Products added to Supabase successfully."})
