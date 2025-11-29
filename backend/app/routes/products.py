@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+import requests
 
 products_bp = Blueprint("products", __name__)
 
@@ -8,6 +9,14 @@ MOCK_PRODUCTS = [
 ]
 
 
+def get_products() -> list:
+    URL = "https://dummyjson.com/products"
+    response = requests.get(URL).json()
+    products = response.get("products", [])
+    return products
+
+
 @products_bp.get("/")
 def list_products():
-    return jsonify(products=MOCK_PRODUCTS)
+    products = get_products()
+    return jsonify(products)
