@@ -130,7 +130,7 @@ export default function SwipeFeed() {
   const viewStartTime = useRef(null);
 
   const { addLike, addPass, likes, passes } = useFeedStore();
-  const { hasSeenWelcome, markWelcomeSeen, name } = useProfileStore();
+  const { hasSeenWelcome, markWelcomeSeen, name, addSavedItem, removeSavedItem, isItemSaved } = useProfileStore();
   const { addToCart } = useCheckoutStore();
 
   useEffect(() => {
@@ -151,6 +151,22 @@ export default function SwipeFeed() {
   const handleCloseWelcome = () => {
     setShowWelcome(false);
     markWelcomeSeen();
+  };
+
+  const handleSave = () => {
+    const product = products[currentIndex];
+    if (!product) return;
+
+    if (isItemSaved(product.id)) {
+      removeSavedItem(product.id);
+      setNotification({ type: 'unsaved', product });
+    } else {
+      addSavedItem(product);
+      addToCart(product); // Also add to cart when saved
+      setNotification({ type: 'saved', product });
+    }
+
+    setTimeout(() => setNotification(null), 2000);
   };
 
   const loadProducts = async () => {
@@ -267,16 +283,27 @@ export default function SwipeFeed() {
             <div className={`px-6 py-3 rounded-xl shadow-2xl backdrop-blur-md border-2 flex items-center gap-3 ${
               notification.type === 'like'
                 ? 'bg-green-500/20 border-green-400 text-green-100'
+                : notification.type === 'saved'
+                ? 'bg-purple-500/20 border-purple-400 text-purple-100'
+                : notification.type === 'unsaved'
+                ? 'bg-gray-500/20 border-gray-400 text-gray-100'
                 : 'bg-red-500/20 border-red-400 text-red-100'
             }`}>
               {notification.type === 'like' ? (
                 <Heart className="w-5 h-5 fill-current" />
+              ) : notification.type === 'saved' ? (
+                <Bookmark className="w-5 h-5 fill-current" />
+              ) : notification.type === 'unsaved' ? (
+                <Bookmark className="w-5 h-5" />
               ) : (
                 <X className="w-5 h-5" />
               )}
               <div>
                 <p className="font-bold text-sm">
-                  {notification.type === 'like' ? 'Added to Likes!' : 'Passed'}
+                  {notification.type === 'like' ? '👍 Liked!' : 
+                   notification.type === 'saved' ? '💜 Saved & Added to Cart!' :
+                   notification.type === 'unsaved' ? '🗑️ Removed from Saved' :
+                   '❌ Passed'}
                 </p>
                 <p className="text-xs opacity-90">{notification.product.name}</p>
               </div>
@@ -440,15 +467,19 @@ export default function SwipeFeed() {
           <X className="w-7 h-7 text-purple-500" />
         </Button>
 
-        <Link to="/saved">
-          <Button
-            size="icon"
-            variant="outline"
-            className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
-          >
-            <Bookmark className="w-6 h-6 text-purple-500" />
-          </Button>
-        </Link>
+        <Button
+          size="icon"
+          variant="outline"
+          className={`w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md ${
+            currentProduct && isItemSaved(currentProduct.id) ? 'bg-purple-500/30' : ''
+          }`}
+          onClick={handleSave}
+          disabled={!currentProduct}
+        >
+          <Bookmark className={`w-6 h-6 text-purple-500 ${
+            currentProduct && isItemSaved(currentProduct.id) ? 'fill-purple-500' : ''
+          }`} />
+        </Button>
 
         <Link to="/checkout">
           <Button
