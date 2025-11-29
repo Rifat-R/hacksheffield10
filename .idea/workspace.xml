@@ -14,6 +14,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="JSX File" />
       </list>
     </option>
   </component>
@@ -92,7 +93,7 @@
       <updated>1764427574041</updated>
       <workItem from="1764427575272" duration="726000" />
       <workItem from="1764428351161" duration="1846000" />
-      <workItem from="1764431974224" duration="2805000" />
+      <workItem from="1764431974224" duration="3612000" />
     </task>
     <servers />
   </component>
