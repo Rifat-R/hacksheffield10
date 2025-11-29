@@ -7,9 +7,6 @@ products_bp = Blueprint("products", __name__, url_prefix="/")
 PRODUCTS_URL = "https://dummyjson.com/products"
 
 
-temp_cache = []
-
-
 def parse_product(raw_product: dict) -> dict:
     """Compatible with supabase 'products' table schema."""
     images = raw_product.get("images", [])
@@ -75,6 +72,5 @@ def get_products_from_supabase() -> list:
 @products_bp.get("")
 def list_products():
     """List products from Supabase"""
-    __add_to_supabase()
-    # products = get_products_from_supabase()
-    return jsonify(get_products_from_supabase())
+    products = get_products_from_supabase()
+    return jsonify(products)
