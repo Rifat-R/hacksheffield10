@@ -10,6 +10,6 @@ def create_app(config_name: str | None = None) -> Flask:
 
     app.register_blueprint(core_bp)
     app.register_blueprint(products_bp, url_prefix="/api/products")
-    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
 
     return app
