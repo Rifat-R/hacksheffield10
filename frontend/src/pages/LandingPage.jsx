@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Heart, Zap, TrendingUp, Sparkles, ShoppingBag, BarChart3 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { useProfileStore } from '../state/useProfileStore';
 
 const DEMO_PRODUCTS = [
   {
@@ -36,6 +37,9 @@ const DEMO_PRODUCTS = [
 ];
 
 export default function LandingPage() {
+  const { isProfileComplete } = useProfileStore();
+  const startLink = isProfileComplete ? '/feed' : '/setup';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
       {/* Hero Section */}
@@ -75,7 +79,7 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/feed">
+              <Link to={startLink}>
                 <Button size="xl" className="group">
                   Start Swiping
                   <Heart className="w-5 h-5 group-hover:fill-current transition-all" />
