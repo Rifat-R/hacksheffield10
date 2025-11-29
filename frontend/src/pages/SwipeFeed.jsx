@@ -133,7 +133,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
         rotate: { type: "spring", stiffness: 300, damping: 30 }
       }}
     >
-      <div className="relative w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl">
+      <div className="relative w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl flex! flex-col! gap-4!">
         {/* Product Image */}
         <div className="absolute inset-0">
           <img
@@ -145,17 +145,17 @@ function ProductCard({ product, onSwipe, onDetail }) {
         </div>
 
         {/* Top Info */}
-        <div className="absolute top-0 left-0 right-0 p-5 sm:p-6 flex justify-between items-start gap-3">
-          <Badge variant="default" className="backdrop-blur-md shadow-lg px-3 py-1.5">
+        <div className="absolute top-4 inset-x-4 sm:top-6 sm:inset-x-6 md:top-8 md:inset-x-8 flex justify-between items-start gap-3">
+          <Badge variant="default" className="backdrop-blur-md shadow-lg px-2! py-1!">
             {product.tag}
           </Badge>
-          <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base sm:text-lg font-bold px-3 py-1.5">
+          <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base sm:text-lg font-bold px-2!">
             ${product.price}
           </Badge>
         </div>
 
         {/* Bottom Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white space-y-3">
+        <div className="absolute bottom-4 inset-x-4 sm:bottom-6 sm:inset-x-6 md:bottom-8 md:inset-x-8 text-white space-y-3">
           <div className="space-y-1">
             <p className="text-purple-300 text-xs sm:text-sm font-semibold tracking-wide uppercase">
               {product.brand}
@@ -174,7 +174,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
             {product.style_tags?.map((tag, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-medium text-gray-100 border border-white/10"
+                className="px-2! rounded-full bg-white/20 backdrop-blur-md text-xs font-medium text-gray-100 border border-white/10"
               >
                 #{tag}
               </span>
@@ -324,18 +324,18 @@ export default function SwipeFeed() {
       />
 
       {/* Header */}
-      <header className="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50">
+      <header className="px-4! py-4 sm:px-6 sm:py-5 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">Swipey</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
           <div className="flex gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-green-500/10 border border-green-500/20">
               <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
               <span className="text-gray-300 font-medium">{likes.length}</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
+            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-red-500/10 border border-red-500/20">
               <div className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
               <span className="text-gray-300 font-medium">{passes.length}</span>
             </div>
@@ -344,7 +344,7 @@ export default function SwipeFeed() {
       </header>
 
       {/* Card Stack */}
-      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
+      <div className="flex-1 flex items-center justify-center px-6 py-6 sm:px-8 sm:py-8 ">
         <div className="relative w-full max-w-md aspect-[3/4]">
           <AnimatePresence mode="popLayout">
             {currentProduct ? (
@@ -358,7 +358,7 @@ export default function SwipeFeed() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex items-center justify-center"
+                className="absolute inset-0 flex items-center justify-center "
               >
                 <div className="text-center p-8">
                   <Heart className="w-16 h-16 text-purple-500 mx-auto mb-4" />
@@ -381,7 +381,7 @@ export default function SwipeFeed() {
               style={{ zIndex: 2 }}
             >
               <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl opacity-60">
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 p-10">
                   <img
                     src={products[currentIndex + 1].media?.[0]?.url || products[currentIndex + 1].image}
                     alt={products[currentIndex + 1].name}
