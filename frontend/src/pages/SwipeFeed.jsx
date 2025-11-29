@@ -6,6 +6,7 @@ import { useFeedStore } from '../state/useFeedStore';
 import { useProfileStore } from '../state/useProfileStore';
 import { useCheckoutStore } from '../state/useCheckoutStore';
 import { api } from '../lib/api';
+import { getProductImage, normalizeProduct } from '../lib/productUtils';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 
@@ -19,75 +20,6 @@ const SWIPE_THRESHOLD = 80;
 // Exit animation speed (in ms) - smooth but responsive
 const EXIT_ANIMATION_DURATION = 500;
 // ========================================
-
-// Mock data for initial development
-const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "Lumen Linen Shirt",
-    brand: "North & Co",
-    price: 78,
-    tag: "New Arrival",
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80"
-    }],
-    description: "Breathable linen shirt perfect for summer days",
-    style_tags: ["casual", "summer", "minimal"]
-  },
-  {
-    id: "2",
-    name: "Aero Knit Sneakers",
-    brand: "Strata",
-    price: 120,
-    tag: "Best Seller",
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"
-    }],
-    description: "Lightweight knit sneakers with premium comfort",
-    style_tags: ["sporty", "comfort", "urban"]
-  },
-  {
-    id: "3",
-    name: "Everyday Carry Tote",
-    brand: "Field Studio",
-    price: 64,
-    tag: "Limited",
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80"
-    }],
-    description: "Versatile tote bag for all your daily essentials",
-    style_tags: ["minimal", "practical", "eco-friendly"]
-  },
-  {
-    id: "4",
-    name: "Quartz Analog Watch",
-    brand: "Midnight",
-    price: 210,
-    tag: "Editor's Pick",
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80"
-    }],
-    description: "Timeless elegance with precision craftsmanship",
-    style_tags: ["luxury", "classic", "formal"]
-  },
-  {
-    id: "5",
-    name: "Merino Wool Sweater",
-    brand: "Nordic Thread",
-    price: 95,
-    tag: "Trending",
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80"
-    }],
-    description: "Soft merino wool for ultimate warmth and comfort",
-    style_tags: ["cozy", "winter", "premium"]
-  }
-];
 
 function ProductCard({ product, onSwipe, onDetail }) {
   const x = useMotionValue(0);
@@ -110,7 +42,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
     }
   };
 
-  const imageUrl = product.media?.[0]?.url || product.image;
+  const imageUrl = getProductImage(product) || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
   return (
     <motion.div
@@ -149,7 +81,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
         {/* Top Info */}
         <div className="absolute top-4 inset-x-4 sm:top-6 sm:inset-x-6 md:top-8 md:inset-x-8 flex justify-between items-start gap-3">
           <Badge variant="default" className="backdrop-blur-md shadow-lg px-2! py-1!">
-            {product.tag}
+            {product.category}
           </Badge>
           <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base sm:text-lg font-bold px-2!">
             ${product.price}
@@ -159,9 +91,6 @@ function ProductCard({ product, onSwipe, onDetail }) {
         {/* Bottom Info */}
         <div className="absolute bottom-4 inset-x-4 sm:bottom-6 sm:inset-x-6 md:bottom-8 md:inset-x-8 text-white space-y-3">
           <div className="space-y-1">
-            <p className="text-purple-300 text-xs sm:text-sm font-semibold tracking-wide uppercase">
-              {product.brand}
-            </p>
             <h2 className="text-2xl sm:text-3xl font-bold leading-tight">
               {product.name}
             </h2>
@@ -170,29 +99,19 @@ function ProductCard({ product, onSwipe, onDetail }) {
           <p className="text-gray-200 text-sm sm:text-base line-clamp-2 leading-relaxed">
             {product.description}
           </p>
-          
-          {/* Style Tags */}
-          <div className="flex gap-2 flex-wrap pt-1">
-            {product.style_tags?.map((tag, idx) => (
-              <span
-                key={idx}
-                className="px-2! rounded-full bg-white/20 backdrop-blur-md text-xs font-medium text-gray-100 border border-white/10"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDetail();
-            }}
-            className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-1.5 transition-colors font-medium pt-1"
-          >
-            <Info className="w-4 h-4" />
-            View details
-          </button>
+          {product.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDetail();
+              }}
+              className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-1.5 transition-colors font-medium pt-1"
+            >
+              <Info className="w-4 h-4" />
+              View details
+            </button>
+          )}
         </div>
 
 
@@ -202,7 +121,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
 }
 
 export default function SwipeFeed() {
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(null);
@@ -237,14 +156,14 @@ export default function SwipeFeed() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api.getFeed();
-      if (data.products && data.products.length > 0) {
-        setProducts(data.products);
+      const data = await api.getProducts();
+      if (Array.isArray(data) && data.length > 0) {
+        const normalized = data.map((product, idx) => normalizeProduct(product, idx));
+        setProducts(normalized);
+        setCurrentIndex((prev) => Math.min(prev, normalized.length - 1));
       }
-      // Otherwise use mock data
     } catch (error) {
       console.error('Failed to load feed:', error);
-      // Use mock data on error
     } finally {
       setLoading(false);
     }
@@ -422,7 +341,15 @@ export default function SwipeFeed() {
       <div className="flex-1 flex items-center justify-center px-6 py-6 sm:px-8 sm:py-8 ">
         <div className="relative w-full max-w-md aspect-[3/4]">
           <AnimatePresence mode="popLayout">
-            {currentProduct ? (
+            {loading ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute inset-0 flex items-center justify-center "
+              >
+                <p className="text-gray-300">Loading products...</p>
+              </motion.div>
+            ) : currentProduct ? (
               <ProductCard
                 key={currentProduct.id}
                 product={currentProduct}
@@ -458,7 +385,7 @@ export default function SwipeFeed() {
               <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl opacity-60">
                 <div className="absolute inset-0 p-10">
                   <img
-                    src={products[currentIndex + 1].media?.[0]?.url || products[currentIndex + 1].image}
+                    src={getProductImage(products[currentIndex + 1]) || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
                     alt={products[currentIndex + 1].name}
                     className="w-full h-full object-cover"
                   />
@@ -479,7 +406,7 @@ export default function SwipeFeed() {
               <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl opacity-30">
                 <div className="absolute inset-0">
                   <img
-                    src={products[currentIndex + 2].media?.[0]?.url || products[currentIndex + 2].image}
+                    src={getProductImage(products[currentIndex + 2]) || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
                     alt={products[currentIndex + 2].name}
                     className="w-full h-full object-cover"
                   />

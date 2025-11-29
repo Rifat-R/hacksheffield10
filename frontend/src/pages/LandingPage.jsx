@@ -1,44 +1,31 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Zap, TrendingUp, Sparkles, ShoppingBag, BarChart3 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { useProfileStore } from '../state/useProfileStore';
-
-const DEMO_PRODUCTS = [
-  {
-    id: 1,
-    name: "Lumen Linen Shirt",
-    brand: "North & Co",
-    price: "$78",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80"
-  },
-  {
-    id: 2,
-    name: "Aero Knit Sneakers",
-    brand: "Strata",
-    price: "$120",
-    image: "https://images.unsplash.com/photo-1528701800489-20be9f44431d?auto=format&fit=crop&w=400&q=80"
-  },
-  {
-    id: 3,
-    name: "Everyday Carry Tote",
-    brand: "Field Studio",
-    price: "$64",
-    image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=400&q=80"
-  },
-  {
-    id: 4,
-    name: "Quartz Analog Watch",
-    brand: "Midnight",
-    price: "$210",
-    image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=400&q=80"
-  }
-];
+import { api } from '../lib/api';
+import { getProductImage, normalizeProduct } from '../lib/productUtils';
 
 export default function LandingPage() {
-  const { isProfileComplete } = useProfileStore();
-  const startLink = isProfileComplete ? '/feed' : '/setup';
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await api.getProducts();
+        if (Array.isArray(data)) {
+          setProducts(data.map((item, idx) => normalizeProduct(item, idx)));
+        }
+      } catch (error) {
+        console.error('Failed to load preview products:', error);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  const previewProducts = products.slice(0, 8);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
@@ -258,34 +245,40 @@ export default function LandingPage() {
           </motion.div>
 
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {DEMO_PRODUCTS.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
-                className="flex-shrink-0 w-64"
-              >
-                <Card className="overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer">
-                  <div className="aspect-square overflow-hidden bg-gray-800">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardDescription className="text-xs text-purple-300">
-                      {product.brand}
-                    </CardDescription>
-                    <CardTitle className="text-base">{product.name}</CardTitle>
-                    <p className="text-lg font-bold text-white">{product.price}</p>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            ))}
+            {previewProducts.length === 0 ? (
+              <p className="text-gray-400">Products are loading...</p>
+            ) : (
+              previewProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  className="flex-shrink-0 w-64"
+                >
+                  <Card className="overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer">
+                    <div className="aspect-square overflow-hidden bg-gray-800">
+                      <img
+                        src={getProductImage(product) || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
+                        alt={product.name}
+                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <CardHeader className="p-4">
+                      {product.category && (
+                        <CardDescription className="text-xs text-purple-300">
+                          {product.category}
+                        </CardDescription>
+                      )}
+                      <CardTitle className="text-base">{product.name}</CardTitle>
+                      <p className="text-lg font-bold text-white">${product.price}</p>
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>
