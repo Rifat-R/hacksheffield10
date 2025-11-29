@@ -18,7 +18,7 @@ echo "Starting Flask backend..."
     # Use local venv if present.
     source "${ROOT_DIR}/.venv/bin/activate"
   fi
-  python -m flask --app app --debug run --host 0.0.0.0 --port 5000
+  python -m flask --app wsgi --debug run --host 0.0.0.0 --port 5000
 ) &
 BACKEND_PID=$!
 
