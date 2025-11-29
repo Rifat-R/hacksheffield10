@@ -64,7 +64,10 @@ def get_products_from_supabase() -> list:
         raise ValueError("Supabase URL or Key is not set.")
 
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    response = supabase.table("products").select("*").execute()
+    # Only select fields needed for display, exclude heavy embedding field
+    response = supabase.table("products").select(
+        "id, external_id, name, description, price, category, image_url, tags, created_at"
+    ).execute()
     return response.data
 
 
@@ -73,5 +76,4 @@ def get_products_from_supabase() -> list:
 def list_products():
     """List products from Supabase"""
     products = get_products_from_supabase()
-    print(products)
     return jsonify(products)

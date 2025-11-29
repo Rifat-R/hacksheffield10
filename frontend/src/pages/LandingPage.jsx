@@ -76,7 +76,7 @@ export default function LandingPage() {
                   <Heart className="w-5 h-5 group-hover:fill-current transition-all" />
                 </Button>
               </Link>
-              <Link to="/auth?role=brand">
+              <Link to="/dashboard/products">
                 <Button size="xl" variant="outline">
                   For Brands
                   <BarChart3 className="w-5 h-5" />
