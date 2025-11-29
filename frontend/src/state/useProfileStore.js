@@ -12,6 +12,28 @@ export const useProfileStore = create(
       isProfileComplete: false,
       hasSeenWelcome: false,
 
+      // Saved items (bookmark button)
+      savedItems: [],
+
+      // Add item to saved list
+      addSavedItem: (product) => {
+        const { savedItems } = get();
+        // Check if already saved
+        if (!savedItems.find(item => item.id === product.id)) {
+          set({ savedItems: [...savedItems, product] });
+        }
+      },
+
+      // Remove item from saved list
+      removeSavedItem: (productId) => {
+        set({ savedItems: get().savedItems.filter(item => item.id !== productId) });
+      },
+
+      // Check if item is saved
+      isItemSaved: (productId) => {
+        return get().savedItems.some(item => item.id === productId);
+      },
+
       // Set profile data
       setProfile: (profileData) => {
         set({
@@ -64,6 +86,7 @@ export const useProfileStore = create(
           preferredStyles: [],
           isProfileComplete: false,
           hasSeenWelcome: false,
+          savedItems: [],
         });
       },
     }),
