@@ -15,7 +15,7 @@ def parse_product(raw_product: dict) -> dict:
     return {
         "external_id": raw_product.get("id"),
         "name": raw_product.get("title"),
-        # "tags": raw_product.get("tags", []),
+        "tags": raw_product.get("tags", []),
         "description": raw_product.get("description"),
         "price": raw_product.get("price"),
         "category": raw_product.get("category"),
@@ -73,5 +73,4 @@ def get_products_from_supabase() -> list:
 def list_products():
     """List products from Supabase"""
     products = get_products_from_supabase()
-    print(products)
     return jsonify(products)
