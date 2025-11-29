@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 20% 20%, #f7f5ff, #f1f5f9 40%, #e2e8f0 80%);
+  background: radial-gradient(circle at 10% 10%, #f5f3ff, #e2e8f0 40%, #e0f2fe 90%);
   color: #0f172a;
 }
 
@@ -12,64 +12,211 @@
 body {
   margin: 0;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  background: transparent;
 }
 
 .page {
-  width: min(720px, 100vw);
-  padding: 2.5rem 1.5rem;
+  width: min(960px, 100vw);
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.card {
-  background: #ffffff;
-  padding: 2.25rem 2rem;
-  border-radius: 18px;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
-  border: 1px solid #e2e8f0;
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #475569;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
 }
 
 h1 {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.35rem;
   font-size: clamp(2rem, 4vw, 2.6rem);
 }
 
 .lead {
-  margin: 0 0 1.5rem;
+  margin: 0;
   color: #334155;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-.status {
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  background: #f8fafc;
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.25);
 }
 
-.label {
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.like {
+  background: #16a34a;
+}
+
+.dot.pass {
+  background: #ef4444;
+}
+
+.pill-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.divider {
+  width: 1px;
+  height: 14px;
+  background: #334155;
+}
+
+.deck {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 420px;
+  position: relative;
+}
+
+.card {
+  width: min(560px, 90vw);
+  min-height: 420px;
+  padding: 1.75rem;
+  border-radius: 26px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  cursor: grab;
+  user-select: none;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.price {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.image-frame {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  margin-bottom: 1.25rem;
+}
+
+.image-frame img {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.brand {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: #475569;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
-.message {
-  margin: 0.25rem 0 0;
-  font-weight: 600;
+.card h2 {
+  margin: 0;
+  font-size: 1.6rem;
 }
 
-code {
+.hint {
+  margin: 0;
+  color: #1f2937;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.action {
+  border: none;
+  border-radius: 14px;
+  padding: 0.85rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #0f172a;
   background: #e2e8f0;
-  padding: 0.1rem 0.3rem;
-  border-radius: 6px;
-  font-size: 0.95em;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.action.pass {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.action.like {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card {
+    width: 100%;
+  }
 }
