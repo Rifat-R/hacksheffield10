@@ -5,17 +5,21 @@ import { Heart, Zap, TrendingUp, Sparkles, ShoppingBag, BarChart3 } from 'lucide
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { api } from '../lib/api';
-import { getProductImage, normalizeProduct } from '../lib/productUtils';
+import { useProfileStore } from '../state/useProfileStore';
 
 export default function LandingPage() {
   const [products, setProducts] = useState([]);
+  const { isProfileComplete } = useProfileStore();
+  
+  // Determine where to send users based on profile completion
+  const startLink = isProfileComplete ? '/feed' : '/account-setup';
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const data = await api.getProducts();
         if (Array.isArray(data)) {
-          setProducts(data.map((item, idx) => normalizeProduct(item, idx)));
+          setProducts(data);
         }
       } catch (error) {
         console.error('Failed to load preview products:', error);
@@ -261,7 +265,7 @@ export default function LandingPage() {
                   <Card className="overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer">
                     <div className="aspect-square overflow-hidden bg-gray-800">
                       <img
-                        src={getProductImage(product) || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='}
+                        src={product.image_url || product.media?.[0]?.url || 'https://via.placeholder.com/300?text=No+Image'}
                         alt={product.name}
                         className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                       />
