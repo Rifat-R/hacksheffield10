@@ -73,4 +73,5 @@ def get_products_from_supabase() -> list:
 def list_products():
     """List products from Supabase"""
     products = get_products_from_supabase()
+    print(products)
     return jsonify(products)

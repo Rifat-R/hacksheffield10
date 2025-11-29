@@ -6,52 +6,14 @@ import { useCheckoutStore } from '../state/useCheckoutStore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 
-// Demo data for testing
-const DEMO_CART_ITEMS = [
-  {
-    id: "1",
-    name: "Lumen Linen Shirt",
-    brand: "North & Co",
-    price: 78,
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80"
-    }],
-    quantity: 1
-  },
-  {
-    id: "2",
-    name: "Aero Knit Sneakers",
-    brand: "Strata",
-    price: 120,
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80"
-    }],
-    quantity: 2
-  },
-  {
-    id: "4",
-    name: "Quartz Analog Watch",
-    brand: "Midnight",
-    price: 210,
-    media: [{
-      type: "image",
-      url: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=400&q=80"
-    }],
-    quantity: 1
-  }
-];
-
 export default function Checkout() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, getTotal, getTotalItems } = useCheckoutStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
 
-  // Use demo data if cart is empty (for testing)
-  const displayItems = cartItems.length > 0 ? cartItems : DEMO_CART_ITEMS;
-  const total = cartItems.length > 0 ? getTotal() : DEMO_CART_ITEMS.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const itemCount = cartItems.length > 0 ? getTotalItems() : DEMO_CART_ITEMS.reduce((sum, item) => sum + item.quantity, 0);
+  const displayItems = cartItems;
+  const total = getTotal();
+  const itemCount = getTotalItems();
 
   const handleCheckout = async () => {
     setIsProcessing(true);
@@ -161,7 +123,7 @@ export default function Checkout() {
                           {/* Product Image */}
                           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
                             <img
-                              src={item.media?.[0]?.url || item.image}
+                              src={item.media?.[0]?.url || item.image_url || item.image}
                               alt={item.name}
                               className="w-full h-full object-cover"
                             />
@@ -170,9 +132,11 @@ export default function Checkout() {
                           {/* Product Info */}
                           <div className="flex-1 min-w-0 flex flex-col justify-between">
                             <div>
-                              <p className="text-xs text-purple-300 font-semibold mb-1">
-                                {item.brand}
-                              </p>
+                              {item.category && (
+                                <p className="text-xs text-purple-300 font-semibold mb-1">
+                                  {item.category}
+                                </p>
+                              )}
                               <h3 className="text-sm sm:text-base text-white font-semibold mb-1 sm:mb-2 line-clamp-2">
                                 {item.name}
                               </h3>
