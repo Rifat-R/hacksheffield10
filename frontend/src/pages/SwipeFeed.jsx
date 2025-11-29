@@ -14,8 +14,8 @@ import { Badge } from '../components/ui/badge';
 // Recommended range: 50-150px
 const SWIPE_THRESHOLD = 80;
 
-// Exit animation speed (in ms)
-const EXIT_ANIMATION_DURATION = 400;
+// Exit animation speed (in ms) - smooth but responsive
+const EXIT_ANIMATION_DURATION = 500;
 // ========================================
 
 // Mock data for initial development
@@ -93,6 +93,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
   
   const [exitX, setExitX] = useState(0);
   const [exitRotate, setExitRotate] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
 
   const handleDragEnd = (event, info) => {
     if (Math.abs(info.offset.x) > SWIPE_THRESHOLD) {
@@ -101,6 +102,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
       const currentX = x.get();
       setExitX(direction === 'like' ? currentX + 1000 : currentX - 1000);
       setExitRotate(direction === 'like' ? 30 : -30);
+      setIsExiting(true);
       // Trigger swipe immediately for synchronized animations
       onSwipe(direction);
     }
@@ -111,22 +113,22 @@ function ProductCard({ product, onSwipe, onDetail }) {
   return (
     <motion.div
       className="absolute w-full h-full cursor-grab active:cursor-grabbing"
+      style={{ x, rotate, zIndex: isExiting ? 20 : 10 }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      style={{ x, rotate }}
       initial={{ scale: 1, opacity: 1 }}
-      animate={{ x: 0, rotate: 0 }}
+      animate={isExiting ? {} : { x: 0, rotate: 0 }}
       exit={{ 
         x: exitX, 
         rotate: exitRotate,
-        opacity: 0, 
+        opacity: 0.3, 
         transition: { 
           duration: EXIT_ANIMATION_DURATION / 1000,
-          ease: [0.32, 0.72, 0, 1]
+          ease: [0.4, 0.0, 0.2, 1]
         } 
       }}
-      transition={{ 
+      transition={isExiting ? {} : { 
         x: { type: "spring", stiffness: 300, damping: 30 },
         rotate: { type: "spring", stiffness: 300, damping: 30 }
       }}
@@ -250,7 +252,7 @@ export default function SwipeFeed() {
     }
   };
 
-  const handleSwipe = async (direction) => {
+  const handleSwipe = (direction) => {
     const product = products[currentIndex];
     if (!product) return;
 
@@ -260,23 +262,7 @@ export default function SwipeFeed() {
     // Clear the lighting effect after animation completes
     setTimeout(() => setSwipeDirection(null), EXIT_ANIMATION_DURATION);
 
-    // Track view duration
-    if (viewStartTime.current) {
-      const duration = Date.now() - viewStartTime.current;
-      try {
-        await api.recordView(product.id, duration);
-      } catch (error) {
-        console.error('Failed to record view:', error);
-      }
-    }
-
-    // Record swipe
-    try {
-      await api.recordSwipe(product.id, direction);
-    } catch (error) {
-      console.error('Failed to record swipe:', error);
-    }
-
+    // Update state immediately for instant visual feedback
     if (direction === 'like') {
       addLike(product);
     } else {
@@ -284,6 +270,20 @@ export default function SwipeFeed() {
     }
 
     setCurrentIndex((prev) => prev + 1);
+    
+    // Track view duration (non-blocking)
+    if (viewStartTime.current) {
+      const duration = Date.now() - viewStartTime.current;
+      api.recordView(product.id, duration).catch(error => {
+        console.error('Failed to record view:', error);
+      });
+    }
+
+    // Record swipe (non-blocking)
+    api.recordSwipe(product.id, direction).catch(error => {
+      console.error('Failed to record swipe:', error);
+    });
+
     viewStartTime.current = Date.now();
 
     // Preload more products if near the end
@@ -301,26 +301,26 @@ export default function SwipeFeed() {
         className="absolute top-1/2 -translate-y-1/2 right-0 w-2 h-[70vh] bg-linear-to-l from-green-500 to-transparent z-50 pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: swipeDirection === 'like' ? 1 : 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: swipeDirection === 'like' ? 0.15 : 0.2, ease: "easeOut" }}
       />
       <motion.div
         className="absolute top-1/2 -translate-y-1/2 right-0 w-20 h-[70vh] bg-linear-to-l from-green-500/20 to-transparent z-40 pointer-events-none blur-xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: swipeDirection === 'like' ? 1 : 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: swipeDirection === 'like' ? 0.15 : 0.2, ease: "easeOut" }}
       />
       
       <motion.div
         className="absolute top-1/2 -translate-y-1/2 left-0 w-2 h-[70vh] bg-linear-to-r from-red-500 to-transparent z-50 pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: swipeDirection === 'dislike' ? 1 : 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: swipeDirection === 'dislike' ? 0.15 : 0.2, ease: "easeOut" }}
       />
       <motion.div
         className="absolute top-1/2 -translate-y-1/2 left-0 w-20 h-[70vh] bg-linear-to-r from-red-500/20 to-transparent z-40 pointer-events-none blur-xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: swipeDirection === 'dislike' ? 1 : 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ duration: swipeDirection === 'dislike' ? 0.15 : 0.2, ease: "easeOut" }}
       />
 
       {/* Header */}
@@ -346,7 +346,7 @@ export default function SwipeFeed() {
       {/* Card Stack */}
       <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
         <div className="relative w-full max-w-md aspect-[3/4]">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {currentProduct ? (
               <ProductCard
                 key={currentProduct.id}
@@ -372,18 +372,46 @@ export default function SwipeFeed() {
             )}
           </AnimatePresence>
 
-          {/* Next Card Preview */}
+          {/* Next Card Preview - shows actual product */}
           {products[currentIndex + 1] && (
-            <div className="absolute inset-0 -z-10 scale-[0.96] opacity-40">
-              <div className="w-full h-full rounded-3xl bg-gray-800 border border-gray-700" />
-            </div>
+            <motion.div 
+              className="absolute inset-0 pointer-events-none"
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 0.95, y: 10 }}
+              style={{ zIndex: 2 }}
+            >
+              <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl opacity-60">
+                <div className="absolute inset-0">
+                  <img
+                    src={products[currentIndex + 1].media?.[0]?.url || products[currentIndex + 1].image}
+                    alt={products[currentIndex + 1].name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/60" />
+                </div>
+              </div>
+            </motion.div>
           )}
           
-          {/* Second Card Preview */}
+          {/* Second Card Preview - shows actual product */}
           {products[currentIndex + 2] && (
-            <div className="absolute inset-0 -z-20 scale-[0.92] opacity-20">
-              <div className="w-full h-full rounded-3xl bg-gray-800 border border-gray-700" />
-            </div>
+            <motion.div 
+              className="absolute inset-0 pointer-events-none"
+              initial={{ scale: 0.90, y: 20 }}
+              animate={{ scale: 0.90, y: 20 }}
+              style={{ zIndex: 1 }}
+            >
+              <div className="w-full h-full rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl opacity-30">
+                <div className="absolute inset-0">
+                  <img
+                    src={products[currentIndex + 2].media?.[0]?.url || products[currentIndex + 2].image}
+                    alt={products[currentIndex + 2].name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/50 to-black/70" />
+                </div>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>

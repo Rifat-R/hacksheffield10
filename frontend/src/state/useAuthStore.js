@@ -20,7 +20,7 @@ export const useAuthStore = create(
         user: null, 
         token: null, 
         role: null,
-        isAuthenticated: false 
+        isAuthenticated: false  
       }),
       
       updateUser: (userData) => set((state) => ({ 
