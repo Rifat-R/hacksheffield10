@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useFeedStore } from '../state/useFeedStore';
+import { useProfileStore } from '../state/useProfileStore';
 import { useCheckoutStore } from '../state/useCheckoutStore';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 
 export default function SavedItems() {
   const navigate = useNavigate();
-  const { likes } = useFeedStore();
+  const { savedItems, removeSavedItem } = useProfileStore();
   const { addToCart } = useCheckoutStore();
   const [removingId, setRemovingId] = useState(null);
 
@@ -19,7 +19,10 @@ export default function SavedItems() {
 
   const handleRemove = (productId) => {
     setRemovingId(productId);
-    // Animation will handle removal
+    setTimeout(() => {
+      removeSavedItem(productId);
+      setRemovingId(null);
+    }, 300);
   };
 
   return (
@@ -35,7 +38,7 @@ export default function SavedItems() {
           </button>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">Saved Items</h1>
-            <p className="text-xs sm:text-sm text-gray-400">{likes.length} items</p>
+            <p className="text-xs sm:text-sm text-gray-400">{savedItems.length} items</p>
           </div>
         </div>
       </header>
@@ -43,7 +46,7 @@ export default function SavedItems() {
       {/* Content */}
       <div className="px-4 py-6 sm:px-6 sm:py-8">
         <div className="max-w-6xl mx-auto">
-          {likes.length === 0 ? (
+          {savedItems.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -52,7 +55,7 @@ export default function SavedItems() {
               <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">No saved items yet</h2>
               <p className="text-gray-400 mb-6">
-                Start swiping to save products you love
+                Tap the bookmark button on products to save them here
               </p>
               <Link to="/feed">
                 <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
@@ -63,7 +66,7 @@ export default function SavedItems() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <AnimatePresence mode="popLayout">
-                {likes.map((product) => (
+                {savedItems.map((product) => (
                   <motion.div
                     key={product.id}
                     layout
@@ -75,7 +78,7 @@ export default function SavedItems() {
                     {/* Product Image */}
                     <div className="relative aspect-square">
                       <img
-                        src={product.media?.[0]?.url || product.image}
+                        src={product.media?.[0]?.url || product.image_url || 'https://via.placeholder.com/400?text=No+Image'}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />
