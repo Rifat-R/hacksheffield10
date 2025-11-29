@@ -129,12 +129,12 @@ export default function SwipeFeed() {
   const [showWelcome, setShowWelcome] = useState(false);
   const viewStartTime = useRef(null);
 
-  const { addLike, addPass, likes, passes } = useFeedStore();
+  const { addLike, addPass, likes, passes, hasMore, isLoading: storeIsLoading, loadMoreProducts, setProducts: setStoreProducts, setHasMore, setTotalProducts } = useFeedStore();
   const { hasSeenWelcome, markWelcomeSeen, name, addSavedItem, removeSavedItem, isItemSaved } = useProfileStore();
   const { addToCart } = useCheckoutStore();
 
   useEffect(() => {
-    loadProducts();
+    loadInitialProducts();
     viewStartTime.current = Date.now();
     
     // Show welcome alert if first time
@@ -147,6 +147,13 @@ export default function SwipeFeed() {
       }, 4000);
     }
   }, []);
+
+  // Auto-prefetch when approaching end of current products
+  useEffect(() => {
+    if (products.length > 0 && currentIndex >= products.length - 5 && hasMore && !storeIsLoading) {
+      loadMoreProducts(api);
+    }
+  }, [currentIndex, products.length, hasMore, storeIsLoading]);
 
   const handleCloseWelcome = () => {
     setShowWelcome(false);
@@ -169,14 +176,28 @@ export default function SwipeFeed() {
     setTimeout(() => setNotification(null), 2000);
   };
 
-  const loadProducts = async () => {
+  const loadInitialProducts = async () => {
+    // Check if we have cached products
+    const cachedProducts = useFeedStore.getState().products;
+    if (cachedProducts && cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+      setCurrentIndex(useFeedStore.getState().currentIndex || 0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await api.getProducts();
+      const response = await api.getProducts(20, 0);
+      const data = response.products || response;
+      
       if (Array.isArray(data) && data.length > 0) {
         const normalized = data.map((product, idx) => normalizeProduct(product, idx));
         setProducts(normalized);
-        setCurrentIndex((prev) => Math.min(prev, normalized.length - 1));
+        setStoreProducts(normalized);
+        setHasMore(response.hasMore !== undefined ? response.hasMore : data.length === 20);
+        setTotalProducts(response.total || data.length);
+        setCurrentIndex(0);
       }
     } catch (error) {
       console.error('Failed to load feed:', error);
@@ -184,6 +205,14 @@ export default function SwipeFeed() {
       setLoading(false);
     }
   };
+
+  // Sync store products with local state when new products are loaded
+  useEffect(() => {
+    const storeProducts = useFeedStore.getState().products;
+    if (storeProducts.length > products.length) {
+      setProducts(storeProducts);
+    }
+  }, [storeIsLoading]);
 
   const handleSwipe = (direction) => {
     const product = products[currentIndex];
@@ -368,13 +397,35 @@ export default function SwipeFeed() {
       <div className="flex-1 flex items-center justify-center px-6 py-6 sm:px-8 sm:py-8 ">
         <div className="relative w-full max-w-md aspect-[3/4]">
           <AnimatePresence mode="popLayout">
-            {loading ? (
+            {loading && products.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex items-center justify-center "
+                className="absolute inset-0 rounded-3xl bg-gray-800/50 border-2 border-gray-700/50 overflow-hidden"
               >
-                <p className="text-gray-300">Loading products...</p>
+                <div className="animate-pulse h-full flex flex-col">
+                  {/* Skeleton Image */}
+                  <div className="w-full h-64 bg-gray-700/50" />
+                  
+                  {/* Skeleton Content */}
+                  <div className="p-6 space-y-4 flex-1">
+                    <div className="h-8 bg-gray-700/50 rounded w-3/4" />
+                    <div className="h-6 bg-gray-700/50 rounded w-1/4" />
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-700/50 rounded" />
+                      <div className="h-4 bg-gray-700/50 rounded w-5/6" />
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <div className="h-6 w-16 bg-gray-700/50 rounded-full" />
+                      <div className="h-6 w-20 bg-gray-700/50 rounded-full" />
+                    </div>
+                  </div>
+                  
+                  {/* Loading text */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center">
+                    <p className="text-purple-400 text-sm font-medium">Loading products...</p>
+                  </div>
+                </div>
               </motion.div>
             ) : currentProduct ? (
               <ProductCard

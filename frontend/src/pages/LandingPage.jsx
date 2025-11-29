@@ -9,6 +9,7 @@ import { useProfileStore } from '../state/useProfileStore';
 
 export default function LandingPage() {
   const [products, setProducts] = useState([]);
+  const [isPrefetching, setIsPrefetching] = useState(false);
   const { isProfileComplete } = useProfileStore();
   
   // Determine where to send users based on profile completion
@@ -17,9 +18,19 @@ export default function LandingPage() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await api.getProducts();
+        // Load preview products for landing page
+        const response = await api.getProducts(8, 0);
+        const data = response.products || response;
         if (Array.isArray(data)) {
           setProducts(data);
+        }
+        
+        // Prefetch full initial batch for feed in background
+        if (!isPrefetching) {
+          setIsPrefetching(true);
+          api.getProducts(20, 0).catch(err => 
+            console.error('Background prefetch failed:', err)
+          );
         }
       } catch (error) {
         console.error('Failed to load preview products:', error);

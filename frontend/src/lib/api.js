@@ -29,16 +29,21 @@ class APIClient {
 
   // Feed endpoints
   async getFeed(cursor = null, limit = 10) {
-    return this.getProducts();
+    return this.getProducts(limit, cursor);
   }
 
   // Product endpoints
-  async getProducts() {
-    return this.request('/products');
+  async getProducts(limit = 20, offset = 0) {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit);
+    if (offset) params.append('offset', offset);
+    
+    return this.request(`/products?${params.toString()}`);
   }
 
   async getProduct(id) {
-    const products = await this.getProducts();
+    const response = await this.getProducts(100, 0);
+    const products = response.products || response;
     return products.find(
       (product) =>
         String(product.id) === String(id) ||
