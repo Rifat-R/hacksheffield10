@@ -1,6 +1,5 @@
 import os
 from typing import Iterable
-
 from services.gemini_client import GEMINI_API_KEY, client
 
 # Configure via environment variables
@@ -40,19 +39,21 @@ def build_product_text(product: dict) -> str:
     return "\n".join(parts).strip()
 
 
-def create_embedding(text: str) -> list[float]:
+def create_embedding(text: str):
     """Generate an embedding vector from text using Gemini's embedding endpoint."""
-    if not GEMINI_API_KEY:
-        raise EmbeddingError("GEMINI_API_KEY is not set; cannot generate embeddings.")
+    if not GEMINI_API_KEY or not client:
+        raise EmbeddingError(
+            "Gemini client not available; set GEMINI_API_KEY and install google-genai."
+        )
     if not text:
         raise EmbeddingError("Cannot embed empty text.")
 
     try:
         response = client.models.embed_content(
             model=EMBEDDING_MODEL,
-            content=text,
+            contents=text,
         )
-        return response.embedding.values
+        return response.embeddings[0].values  # type: ignore[attr-defined]
     except Exception as exc:  # noqa: BLE001
         raise EmbeddingError(f"Failed to create embedding: {exc}") from exc
 
@@ -64,4 +65,4 @@ def embed_product(product: dict) -> list[float]:
     Expected keys: name, description, category, tags, external_id.
     """
     prompt = build_product_text(product)
-    return create_embedding(prompt)
+    return create_embedding(prompt)  # type: ignore
