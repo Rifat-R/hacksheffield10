@@ -3,6 +3,8 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-mo
 import { Heart, X, Info, Home, Bookmark, User, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFeedStore } from '../state/useFeedStore';
+import { useProfileStore } from '../state/useProfileStore';
+import { useCheckoutStore } from '../state/useCheckoutStore';
 import { api } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -205,14 +207,32 @@ export default function SwipeFeed() {
   const [loading, setLoading] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const viewStartTime = useRef(null);
 
   const { addLike, addPass, likes, passes } = useFeedStore();
+  const { hasSeenWelcome, markWelcomeSeen, name } = useProfileStore();
+  const { addToCart } = useCheckoutStore();
 
   useEffect(() => {
     loadProducts();
     viewStartTime.current = Date.now();
+    
+    // Show welcome alert if first time
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+      // Auto-hide after 4 seconds
+      setTimeout(() => {
+        setShowWelcome(false);
+        markWelcomeSeen();
+      }, 4000);
+    }
   }, []);
+
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    markWelcomeSeen();
+  };
 
   const loadProducts = async () => {
     setLoading(true);
@@ -249,6 +269,8 @@ export default function SwipeFeed() {
     // Update state immediately for instant visual feedback
     if (direction === 'like') {
       addLike(product);
+      // Add to cart when liked
+      addToCart(product);
     } else {
       addPass(product);
     }
@@ -280,6 +302,39 @@ export default function SwipeFeed() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+      {/* Welcome Alert */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto max-w-sm mx-4"
+          >
+            <div className="bg-purple-600/30 border-2 border-purple-400/40 rounded-2xl shadow-2xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">✨</span>
+                    <h3 className="text-white font-bold text-lg">Welcome{name ? `, ${name}` : ''}!</h3>
+                  </div>
+                  <p className="text-white/90 text-sm">
+                    🎯 Showing tailored products just for you based on your style preferences
+                  </p>
+                </div>
+                <button
+                  onClick={handleCloseWelcome}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Notification Alert */}
       <AnimatePresence>
         {notification && (
@@ -345,14 +400,19 @@ export default function SwipeFeed() {
             <h1 className="text-xl sm:text-2xl font-bold text-white">Swipey</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
-          <div className="flex gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-green-500/10 border border-green-500/20">
-              <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
-              <span className="text-gray-300 font-medium">{likes.length}</span>
-            </div>
-            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-red-500/10 border border-red-500/20">
-              <div className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
-              <span className="text-gray-300 font-medium">{passes.length}</span>
+          <div className="flex gap-3 sm:gap-4 items-center">
+            <Link to="/" className="text-gray-400 hover:text-white transition-colors">
+              <Info className="w-6 h-6" />
+            </Link>
+            <div className="flex gap-3 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-green-500/10 border border-green-500/20">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                <span className="text-gray-300 font-medium">{likes.length}</span>
+              </div>
+              <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-red-500/10 border border-red-500/20">
+                <div className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
+                <span className="text-gray-300 font-medium">{passes.length}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -431,33 +491,47 @@ export default function SwipeFeed() {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-4 pb-6 sm:px-6 sm:pb-8">
-        <div className="max-w-md mx-auto flex justify-center items-center gap-6 sm:gap-8">
+      {/* TikTok-Style Vertical Action Buttons - Bottom Right */}
+      <div className="absolute bottom-24 right-4 sm:right-6 z-30 flex flex-col gap-4">
+        <Button
+          size="icon"
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
+          onClick={() => handleSwipe('like')}
+          disabled={!currentProduct}
+        >
+          <Heart className="w-7 h-7 text-purple-500" />
+        </Button>
+
+        <Button
+          size="icon"
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
+          onClick={() => handleSwipe('dislike')}
+          disabled={!currentProduct}
+        >
+          <X className="w-7 h-7 text-purple-500" />
+        </Button>
+
+        <Link to="/saved">
           <Button
             size="icon"
             variant="outline"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-red-500 hover:bg-red-500/10 hover:scale-110 transition-all duration-200 shadow-lg shadow-red-500/20"
-            onClick={() => handleSwipe('dislike')}
-            disabled={!currentProduct}
+            className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
           >
-            <X className="w-7 h-7 sm:w-8 sm:h-8 text-red-500" />
+            <Bookmark className="w-6 h-6 text-purple-500" />
           </Button>
-          
+        </Link>
+
+        <Link to="/checkout">
           <Button
             size="icon"
             variant="outline"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-green-500 hover:bg-green-500/10 hover:scale-110 transition-all duration-200 shadow-lg shadow-green-500/20"
-            onClick={() => handleSwipe('like')}
-            disabled={!currentProduct}
+            className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
           >
-            <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
+            <ShoppingCart className="w-6 h-6 text-purple-500" />
           </Button>
-        </div>
-        
-        <p className="text-center text-xs text-gray-500 mt-4 sm:mt-6">
-          Swipe right to like • Swipe left to pass
-        </p>
+        </Link>
       </div>
 
       {/* Bottom Navigation */}
