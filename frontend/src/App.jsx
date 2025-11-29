@@ -22,7 +22,7 @@ function App() {
   return (
     <main className="page">
       <section className="card">
-        <p className="eyebrow">Flask + Vite + React</p>
+        <p className="eyebrow text-red-500">Flask + Vite + React</p>
         <h1>Full-stack starter</h1>
         <p className="lead">
           This frontend uses Vite and proxies <code>/api</code> to a Flask

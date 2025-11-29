@@ -14,7 +14,7 @@ Basic Flask backend with a Vite + React frontend.
    - Vite proxies `/api` to `http://localhost:5000` (see `frontend/vite.config.js`).
 
 ## One-command dev
-- From repo root: `./run_dev.sh`
+- From repo root: `./run.sh`
   - Starts Flask (uses `.venv` if present) and Vite dev server. Ctrl+C stops both.
 
 ## Notes
