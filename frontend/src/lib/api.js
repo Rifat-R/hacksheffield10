@@ -63,36 +63,6 @@ class APIClient {
       body: JSON.stringify({ product_id: productId, target }),
     });
   }
-
-  // Auth endpoints
-  async login(email, password, role = 'shopper') {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, role }),
-    });
-  }
-
-  async signup(email, password, role = 'shopper') {
-    return this.request('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, role }),
-    });
-  }
-
-  // Onboarding
-  async sendOnboardingMessage(conversation) {
-    return this.request('/onboarding/ai', {
-      method: 'POST',
-      body: JSON.stringify({ conversation }),
-    });
-  }
-
-  async finalizeOnboarding(preferences) {
-    return this.request('/onboarding/finalize', {
-      method: 'POST',
-      body: JSON.stringify(preferences),
-    });
-  }
 }
 
 export const api = new APIClient();
