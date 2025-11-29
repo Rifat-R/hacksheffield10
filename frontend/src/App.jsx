@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import GeminiChat from "./GeminiChat";
 
 const PRODUCTS = [
   {
@@ -157,22 +158,24 @@ function App() {
         )}
       </section>
 
-      <div className="actions">
-        <button
-          className="action pass"
-          onClick={() => handleDecision(DECISION.PASS)}
-          aria-label="Pass"
-        >
-          ✕ Pass
-        </button>
-        <button
-          className="action like"
-          onClick={() => handleDecision(DECISION.LIKE)}
-          aria-label="Like"
-        >
-          ♥ Like
-        </button>
-      </div>
+        <div className="actions">
+            <button
+                className="action pass"
+                onClick={() => handleDecision(DECISION.PASS)}
+                aria-label="Pass"
+            >
+                ✕ Pass
+            </button>
+            <button
+                className="action like"
+                onClick={() => handleDecision(DECISION.LIKE)}
+                aria-label="Like"
+            >
+                ♥ Like
+            </button>
+        </div>
+
+        <GeminiChat />  {/* floating popup, not affecting layout */}
     </main>
   );
 }
