@@ -79,7 +79,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-gray-950 flex items-center justify-center text-gray-300">
+      <div className="h-screen w-full bg-gray-950 flex items-center justify-center text-gray-300">
         Loading product...
       </div>
     );
@@ -87,7 +87,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="h-screen w-full bg-gray-950 flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle>Product not found</CardTitle>
@@ -107,7 +107,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-screen w-full bg-gray-950 flex flex-col overflow-hidden">
       {/* Added to Cart Notification */}
       <AnimatePresence>
         {showAddedNotification && (

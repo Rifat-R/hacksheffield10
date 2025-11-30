@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { Heart, X, Info, Home, Bookmark, User, ShoppingCart } from 'lucide-react';
+import { Heart, X, Info, Home, Bookmark, User, ShoppingCart, Map } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFeedStore } from '../state/useFeedStore';
 import { useProfileStore } from '../state/useProfileStore';
@@ -256,7 +256,7 @@ export default function SwipeFeed() {
   const currentProduct = products[0];
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+    <div className="h-screen w-full bg-gray-950 flex flex-col relative overflow-hidden">
       {/* Welcome Alert */}
       <AnimatePresence>
         {showWelcome && (
@@ -362,7 +362,7 @@ export default function SwipeFeed() {
       <header className="px-4! py-2 sm:py-3 md:py-4 sm:px-6 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Swipey</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">TrendSwipe</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
           <div className="flex gap-3 sm:gap-4 items-center">
@@ -534,13 +534,36 @@ export default function SwipeFeed() {
       {/* Bottom Navigation */}
       <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg flex-shrink-0">
         <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
-          <Link to="/feed" className="flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
-            <Home className="w-6 h-6" />
-            <span className="text-xs font-medium">Feed</span>
-          </Link>
           <Link to="/saved" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <Bookmark className="w-6 h-6" />
             <span className="text-xs font-medium">Saved</span>
+          </Link>
+          <Link to="/explore" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Map className="w-6 h-6" />
+            <span className="text-xs font-medium">Explore</span>
+          </Link>
+          <Link to="/feed" className="relative flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
+            {/* Glowing animated ring */}
+            <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-12 h-12 pointer-events-none z-0">
+              <span className="absolute inset-0 rounded-full bg-purple-500/30 blur-xl animate-pulse" />
+              <span className="absolute inset-1 rounded-full bg-purple-400/40 blur-lg animate-pulse" />
+            </span>
+            <span className="relative z-10">
+              <Home className="w-6 h-6 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)] animate-glow" />
+            </span>
+            <span className="relative z-10 font-bold animate-glow-text">Feed</span>
+            <style>{`
+              @keyframes glow {
+                0%, 100% { filter: drop-shadow(0 0 6px #a855f7) drop-shadow(0 0 12px #a855f7aa); }
+                50% { filter: drop-shadow(0 0 16px #a855f7) drop-shadow(0 0 32px #a855f7cc); }
+              }
+              .animate-glow { animation: glow 2s infinite alternate; }
+              @keyframes glowText {
+                0%, 100% { text-shadow: 0 0 6px #a855f7, 0 0 12px #a855f7aa; }
+                50% { text-shadow: 0 0 16px #a855f7, 0 0 32px #a855f7cc; }
+              }
+              .animate-glow-text { animation: glowText 2s infinite alternate; }
+            `}</style>
           </Link>
           <Link to="/checkout" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <ShoppingCart className="w-6 h-6" />

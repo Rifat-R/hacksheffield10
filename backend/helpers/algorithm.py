@@ -112,6 +112,19 @@ def get_next_best_product(user_id: int) -> dict | None:
     if not candidates:
         return None  # no products left to show
 
+    # Cold start: if no user embedding, return first candidate with an embedding
+    if user_embedding is None:
+        for product in candidates:
+            emb_list = parse_embedding(product.get("embedding"))
+            if emb_list is not None and emb_list.size > 0:
+                seen[product["id"]] = True
+                return product
+        # If no products have embeddings, just return the first one
+        if candidates:
+            seen[candidates[0]["id"]] = True
+            return candidates[0]
+        return None
+
     # Compute similarity for each candidate and pick the best
     best_product = None
     best_score = -1.0
