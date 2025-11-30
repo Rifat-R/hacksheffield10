@@ -55,6 +55,13 @@ class APIClient {
     );
   }
 
+  // Search products
+  async searchProducts(query) {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    return this.request(`/products/search?${params.toString()}`);
+  }
+
   // Swipe endpoints (dashboard/swipes)
   async getNextProduct() {
     return this.request(`/next-product`);
