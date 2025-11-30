@@ -305,7 +305,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center mt-12"
           >
-            <Link to="/auth?role=brand">
+            <Link to="/dashboard/products">
               <Button size="xl" variant="outline" className="border-purple-500/50 hover:bg-purple-500/10">
                 Get Started as a Brand
                 <TrendingUp className="w-5 h-5" />
@@ -391,8 +391,8 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold mb-4">For Brands</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><Link to="/auth?role=brand" className="hover:text-purple-400 transition-colors">Brand Login</Link></li>
-                <li><Link to="/auth?role=brand" className="hover:text-purple-400 transition-colors">Get Started</Link></li>
+                <li><Link to="/dashboard/products" className="hover:text-purple-400 transition-colors">Brand Dashboard</Link></li>
+                <li><Link to="/dashboard/products" className="hover:text-purple-400 transition-colors">Get Started</Link></li>
               </ul>
             </div>
             <div>

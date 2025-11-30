@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { api } from '../lib/api';
+import { getProductImage } from '../lib/productUtils';
 
 // Realm definitions with quests
 const REALMS = [
@@ -854,7 +855,7 @@ function RealmDetail({ realm, onClose, realmProgress, onCompleteQuest, onTrackVi
                         >
                           <div className="aspect-square bg-gray-700 relative overflow-hidden">
                             <img
-                              src={product.images?.[0] || product.image || 'https://via.placeholder.com/300?text=Fashion'}
+                              src={getProductImage(product) || 'https://via.placeholder.com/300?text=Fashion'}
                               alt={product.name}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             />

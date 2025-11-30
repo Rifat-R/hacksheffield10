@@ -260,7 +260,7 @@ function Dashboard() {
             </div>
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => {/* TODO: Link to Grafana dashboard */}}
+                onClick={() => window.open('https://mrmounment.grafana.net/public-dashboards/697e17c05def4610908f3f08896f56c2', '_blank')}
                 className="font-semibold"
               >
                 <BarChart3 className="w-5 h-5" />

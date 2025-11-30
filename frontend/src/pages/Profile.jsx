@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { User, Calendar, Users, Sparkles, Edit2, Save, X, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../state/useProfileStore';
+import { useFeedStore } from '../state/useFeedStore';
+import { useCheckoutStore } from '../state/useCheckoutStore';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -23,6 +25,8 @@ const STYLE_OPTIONS = [
 export default function Profile() {
   const navigate = useNavigate();
   const { name, age, gender, preferredStyles, updateProfile, setPreferredStyles, clearProfile } = useProfileStore();
+  const { reset: resetFeed } = useFeedStore();
+  const { clearCart } = useCheckoutStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [editData, setEditData] = useState({
@@ -85,6 +89,8 @@ export default function Profile() {
 
   const handleReset = () => {
     clearProfile();
+    resetFeed(); // Clear likes and passes
+    clearCart(); // Clear cart items
     // Clear odyssey progress from localStorage
     localStorage.removeItem('odyssey_progress');
     navigate('/setup');
