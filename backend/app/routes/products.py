@@ -1,6 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 import requests
-from functools import lru_cache
 from supabase_client import SUPABASE_URL, SUPABASE_KEY
 from services.embedding_client import embed_product
 
@@ -73,9 +72,13 @@ def get_products_from_supabase() -> list:
 
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     # Only select fields needed for display, exclude heavy embedding field
-    response = supabase.table("products").select(
-        "id, external_id, name, description, price, category, image_url, tags, created_at"
-    ).execute()
+    response = (
+        supabase.table("products")
+        .select(
+            "id, external_id, name, description, price, category, image_url, tags, created_at"
+        )
+        .execute()
+    )
     return response.data
 
 
@@ -87,7 +90,8 @@ def list_products():
     return jsonify(products)
 
 
-@products_bp.get("/supabase")
+@products_bp.get("/send-to-supabase")
 def send_to_supabase():
+    """Test endpoint to add products to Supabase"""
     __add_to_supabase()
     return jsonify({"status": "Products added to Supabase successfully."})

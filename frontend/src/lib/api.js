@@ -1,4 +1,12 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = (() => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  const origin = window.location.origin.replace(/\/$/, '');
+  if (origin.includes('localhost:5173') || origin.includes('127.0.0.1:5173')) {
+    return 'http://localhost:5000/api';
+  }
+  return `${origin}/api`;
+})();
+
 
 class APIClient {
   constructor() {
@@ -18,26 +26,22 @@ class APIClient {
     try {
       const response = await fetch(url, config);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const body = await safeParseJSON(response);
+        const message = body?.error || response.statusText || 'Request failed';
+        throw new Error(`HTTP ${response.status} ${message}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('API request failed:', { url, message: error?.message, error });
       throw error;
     }
   }
 
-  // Feed endpoints
-  async getFeed(cursor = null, limit = 10) {
-    return this.getProducts(limit, cursor);
-  }
-
-  // Product endpoints
+  // Product endpoints (legacy bulk fetch)
   async getProducts(limit = 20, offset = 0) {
     const params = new URLSearchParams();
     if (limit) params.append('limit', limit);
     if (offset) params.append('offset', offset);
-    
     return this.request(`/products?${params.toString()}`);
   }
 
@@ -51,11 +55,26 @@ class APIClient {
     );
   }
 
-  // Swipe endpoints
-  async recordSwipe(productId, direction) {
-    return this.request('/swipes', {
+  // Swipe endpoints (dashboard/swipes)
+  async getNextProduct() {
+    return this.request(`/next-product`);
+  }
+
+  async registerSwipe({ productId, liked }) {
+    return this.request('/register-swipe', {
       method: 'POST',
-      body: JSON.stringify({ product_id: productId, direction }),
+      body: JSON.stringify({
+        product_id: productId,
+        liked,
+      }),
+    });
+  }
+
+  // Deprecated: use registerSwipe instead
+  async recordSwipe(productId, direction) {
+    return this.registerSwipe({
+      productId,
+      liked: direction === 'like',
     });
   }
 
@@ -79,7 +98,7 @@ class APIClient {
   // CHECKOUT / CART ENDPOINTS (Backend TODO)
   // ========================================
   // These routes need to be implemented by the backend team:
-  
+
   /**
    * Get user's cart items
    * GET /api/cart
@@ -227,3 +246,11 @@ class APIClient {
 }
 
 export const api = new APIClient();
+
+async function safeParseJSON(response) {
+  try {
+    return await response.json();
+  } catch (_err) {
+    return null;
+  }
+}
