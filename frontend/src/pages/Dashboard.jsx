@@ -1,6 +1,6 @@
 import { useState, useMemo, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Info, Plus, Edit2, Trash2, BarChart3 } from 'lucide-react';
+import { Home, Info, Plus, Edit2, Trash2, BarChart3, Package, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -29,7 +29,7 @@ const ProductCard = memo(({ product, onProductClick, onEdit, onDelete }) => {
           
           {/* Top Info - Price Badge */}
           <div className="absolute top-4 right-4">
-            <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base font-bold">
+            <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base font-bold px-2 py-1">
               ${product.price}
             </Badge>
           </div>
@@ -37,7 +37,7 @@ const ProductCard = memo(({ product, onProductClick, onEdit, onDelete }) => {
           {/* Category Badge */}
           {product.category && (
             <div className="absolute top-4 left-4">
-              <Badge variant="default" className="backdrop-blur-md shadow-lg">
+              <Badge variant="default" className="backdrop-blur-md shadow-lg px-2 py-1">
                 {product.category}
               </Badge>
             </div>
@@ -236,6 +236,14 @@ function Dashboard() {
     return products.slice(0, displayCount);
   }, [products, displayCount]);
 
+  // Calculate stats
+  const stats = useMemo(() => {
+    const total = products.length;
+    const active = products.filter(p => p.status === 'active' || !p.status).length;
+    const inactive = products.filter(p => p.status === 'inactive').length;
+    return { total, active, inactive };
+  }, [products]);
+
   const handleProductClick = (productId) => {
     navigate(`/product/${productId}`);
   };
@@ -247,9 +255,9 @@ function Dashboard() {
   const hasMore = displayCount < products.length;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-950 text-white">
       {/* Header with Add Button */}
-      <div className="bg-gray-900/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
+      <div className="bg-gray-900/50 backdrop-blur-md border-b border-gray-800 shrink-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -263,8 +271,7 @@ function Dashboard() {
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => {/* TODO: Link to Grafana dashboard */}}
-                variant="outline"
-                className="bg-transparent hover:bg-gray-800 text-gray-300 hover:text-white px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-all border border-gray-700 hover:border-gray-600"
+                className="font-semibold"
               >
                 <BarChart3 className="w-5 h-5" />
                 <span className="hidden sm:inline">Open Analytics</span>
@@ -283,7 +290,53 @@ function Dashboard() {
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Stats Bento Grid */}
+        {!isLoading && !isError && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {/* Total Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-purple-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Total Products</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-purple-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Active Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Active</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.active}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Inactive Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-red-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Inactive</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.inactive}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-red-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
@@ -340,7 +393,8 @@ function Dashboard() {
                 </p>
                 <Button
                   onClick={handleLoadMore}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-10 py-4 rounded-lg text-lg font-semibold transition-all hover:scale-105 shadow-lg hover:shadow-purple-500/50"
+                  size="lg"
+                  className="font-semibold"
                 >
                   Load More Products
                 </Button>
@@ -354,6 +408,7 @@ function Dashboard() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {/* Modals */}
@@ -391,7 +446,7 @@ function Dashboard() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50">
+      <nav className="shrink-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50">
         <div className="max-w-md mx-auto px-6 py-4">
           <div className="flex justify-center">
             <Link
