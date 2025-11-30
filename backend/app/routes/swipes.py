@@ -1,12 +1,14 @@
 from flask import Blueprint, jsonify, request
 import numpy as np
 from supabase_client import supabase
+from helpers.algorithm import get_next_best_product
 
 
 swiped_bp = Blueprint("swipes", __name__, url_prefix="/")
 
 
 ALPHA = 0.1  # learning rate; higher = adapt faster
+USER_ID = 1
 
 
 def get_product_embedding(product_id: int) -> np.ndarray:
@@ -26,7 +28,7 @@ def get_product_embedding(product_id: int) -> np.ndarray:
 
 def get_user_profile(user_id: int):
     res = (
-        supabase.table("user_profiles")
+        supabase.table("users")
         .select("embedding, liked_count")
         .eq("user_id", user_id)
         .maybe_single()
@@ -46,7 +48,7 @@ def upsert_user_profile(user_id: int, embedding: np.ndarray, liked_count: int):
         "embedding": embedding.tolist(),  # Supabase expects list
         "liked_count": liked_count,
     }
-    supabase.table("user_profiles").upsert(payload, on_conflict="user_id").execute()
+    supabase.table("users").upsert(payload, on_conflict="user_id").execute()
 
 
 def update_user_embedding(user_id: int, product_id: int, liked: bool):
@@ -77,7 +79,7 @@ def swipe():
     product_id = int(data["product_id"])
     liked = bool(data["liked"])
 
-    supabase.table("swipes").upsert(
+    supabase.table("user_products").upsert(
         {
             "user_id": user_id,
             "product_id": product_id,
@@ -93,3 +95,12 @@ def swipe():
         print("Error updating embedding:", e)
 
     return jsonify({"status": "ok"})
+
+
+@swiped_bp.get("api/next-product")
+def next_product():
+    user_id = int(request.args["user_id"])
+    product = get_next_best_product(user_id)
+    if product is None:
+        return jsonify({"product": None, "message": "No more products available"}), 200
+    return jsonify({"product": product})
