@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 import requests
+from functools import lru_cache
 from supabase_client import SUPABASE_URL, SUPABASE_KEY
 from services.embedding_client import embed_product
 
@@ -71,7 +72,10 @@ def get_products_from_supabase() -> list:
         raise ValueError("Supabase URL or Key is not set.")
 
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    response = supabase.table("products").select("*").execute()
+    # Only select fields needed for display, exclude heavy embedding field
+    response = supabase.table("products").select(
+        "id, external_id, name, description, price, category, image_url, tags, created_at"
+    ).execute()
     return response.data
 
 

@@ -3,6 +3,8 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-mo
 import { Heart, X, Info, Home, Bookmark, User, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFeedStore } from '../state/useFeedStore';
+import { useProfileStore } from '../state/useProfileStore';
+import { useCheckoutStore } from '../state/useCheckoutStore';
 import { api } from '../lib/api';
 import { getProductImage, normalizeProduct } from '../lib/productUtils';
 import { Button } from '../components/ui/button';
@@ -124,23 +126,78 @@ export default function SwipeFeed() {
   const [loading, setLoading] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const viewStartTime = useRef(null);
 
-  const { addLike, addPass, likes, passes } = useFeedStore();
+  const { addLike, addPass, likes, passes, hasMore, isLoading: storeIsLoading, loadMoreProducts, setProducts: setStoreProducts, setHasMore, setTotalProducts } = useFeedStore();
+  const { hasSeenWelcome, markWelcomeSeen, name, addSavedItem, removeSavedItem, isItemSaved } = useProfileStore();
+  const { addToCart } = useCheckoutStore();
 
   useEffect(() => {
-    loadProducts();
+    loadInitialProducts();
     viewStartTime.current = Date.now();
+    
+    // Show welcome alert if first time
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+      // Auto-hide after 4 seconds
+      setTimeout(() => {
+        setShowWelcome(false);
+        markWelcomeSeen();
+      }, 4000);
+    }
   }, []);
 
-  const loadProducts = async () => {
+  // Auto-prefetch when approaching end of current products
+  useEffect(() => {
+    if (products.length > 0 && currentIndex >= products.length - 5 && hasMore && !storeIsLoading) {
+      loadMoreProducts(api);
+    }
+  }, [currentIndex, products.length, hasMore, storeIsLoading]);
+
+  const handleCloseWelcome = () => {
+    setShowWelcome(false);
+    markWelcomeSeen();
+  };
+
+  const handleSave = () => {
+    const product = products[currentIndex];
+    if (!product) return;
+
+    if (isItemSaved(product.id)) {
+      removeSavedItem(product.id);
+      setNotification({ type: 'unsaved', product });
+    } else {
+      addSavedItem(product);
+      addToCart(product); // Also add to cart when saved
+      setNotification({ type: 'saved', product });
+    }
+
+    setTimeout(() => setNotification(null), 2000);
+  };
+
+  const loadInitialProducts = async () => {
+    // Check if we have cached products
+    const cachedProducts = useFeedStore.getState().products;
+    if (cachedProducts && cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+      setCurrentIndex(useFeedStore.getState().currentIndex || 0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await api.getProducts();
+      const response = await api.getProducts(20, 0);
+      const data = response.products || response;
+      
       if (Array.isArray(data) && data.length > 0) {
         const normalized = data.map((product, idx) => normalizeProduct(product, idx));
         setProducts(normalized);
-        setCurrentIndex((prev) => Math.min(prev, normalized.length - 1));
+        setStoreProducts(normalized);
+        setHasMore(response.hasMore !== undefined ? response.hasMore : data.length === 20);
+        setTotalProducts(response.total || data.length);
+        setCurrentIndex(0);
       }
     } catch (error) {
       console.error('Failed to load feed:', error);
@@ -148,6 +205,14 @@ export default function SwipeFeed() {
       setLoading(false);
     }
   };
+
+  // Sync store products with local state when new products are loaded
+  useEffect(() => {
+    const storeProducts = useFeedStore.getState().products;
+    if (storeProducts.length > products.length) {
+      setProducts(storeProducts);
+    }
+  }, [storeIsLoading]);
 
   const handleSwipe = (direction) => {
     const product = products[currentIndex];
@@ -168,6 +233,8 @@ export default function SwipeFeed() {
     // Update state immediately for instant visual feedback
     if (direction === 'like') {
       addLike(product);
+      // Add to cart when liked
+      addToCart(product);
     } else {
       addPass(product);
     }
@@ -198,7 +265,40 @@ export default function SwipeFeed() {
   const currentProduct = products[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+    <div className="h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+      {/* Welcome Alert */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto max-w-sm mx-4"
+          >
+            <div className="bg-purple-600/30 border-2 border-purple-400/40 rounded-2xl shadow-2xl p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">✨</span>
+                    <h3 className="text-white font-bold text-lg">Welcome{name ? `, ${name}` : ''}!</h3>
+                  </div>
+                  <p className="text-white/90 text-sm">
+                    🎯 Showing tailored products just for you based on your style preferences
+                  </p>
+                </div>
+                <button
+                  onClick={handleCloseWelcome}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Notification Alert */}
       <AnimatePresence>
         {notification && (
@@ -212,16 +312,27 @@ export default function SwipeFeed() {
             <div className={`px-6 py-3 rounded-xl shadow-2xl backdrop-blur-md border-2 flex items-center gap-3 ${
               notification.type === 'like'
                 ? 'bg-green-500/20 border-green-400 text-green-100'
+                : notification.type === 'saved'
+                ? 'bg-purple-500/20 border-purple-400 text-purple-100'
+                : notification.type === 'unsaved'
+                ? 'bg-gray-500/20 border-gray-400 text-gray-100'
                 : 'bg-red-500/20 border-red-400 text-red-100'
             }`}>
               {notification.type === 'like' ? (
                 <Heart className="w-5 h-5 fill-current" />
+              ) : notification.type === 'saved' ? (
+                <Bookmark className="w-5 h-5 fill-current" />
+              ) : notification.type === 'unsaved' ? (
+                <Bookmark className="w-5 h-5" />
               ) : (
                 <X className="w-5 h-5" />
               )}
               <div>
                 <p className="font-bold text-sm">
-                  {notification.type === 'like' ? 'Added to Likes!' : 'Passed'}
+                  {notification.type === 'like' ? '👍 Liked!' : 
+                   notification.type === 'saved' ? '💜 Saved & Added to Cart!' :
+                   notification.type === 'unsaved' ? '🗑️ Removed from Saved' :
+                   '❌ Passed'}
                 </p>
                 <p className="text-xs opacity-90">{notification.product.name}</p>
               </div>
@@ -258,36 +369,63 @@ export default function SwipeFeed() {
       />
 
       {/* Header */}
-      <header className="px-4! py-4 sm:px-6 sm:py-5 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
+      <header className="px-4! py-2 sm:py-3 md:py-4 sm:px-6 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Swipey</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Swipey</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
-          <div className="flex gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-green-500/10 border border-green-500/20">
-              <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
-              <span className="text-gray-300 font-medium">{likes.length}</span>
-            </div>
-            <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-red-500/10 border border-red-500/20">
-              <div className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
-              <span className="text-gray-300 font-medium">{passes.length}</span>
+          <div className="flex gap-3 sm:gap-4 items-center">
+            <Link to="/" className="text-gray-400 hover:text-white transition-colors">
+              <Info className="w-6 h-6" />
+            </Link>
+            <div className="flex gap-3 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-green-500/10 border border-green-500/20">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                <span className="text-gray-300 font-medium">{likes.length}</span>
+              </div>
+              <div className="flex items-center gap-2 px-2! py-1! rounded-full bg-red-500/10 border border-red-500/20">
+                <div className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
+                <span className="text-gray-300 font-medium">{passes.length}</span>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Card Stack */}
-      <div className="flex-1 flex items-center justify-center px-6 py-6 sm:px-8 sm:py-8 ">
-        <div className="relative w-full max-w-md aspect-[3/4]">
+      <div className="flex-1 flex items-center justify-center px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 min-h-0">
+        <div className="relative w-full max-w-md aspect-[3/4] max-h-[calc(100vh-200px)]">
           <AnimatePresence mode="popLayout">
-            {loading ? (
+            {loading && products.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute inset-0 flex items-center justify-center "
+                className="absolute inset-0 rounded-3xl bg-gray-800/50 border-2 border-gray-700/50 overflow-hidden"
               >
-                <p className="text-gray-300">Loading products...</p>
+                <div className="animate-pulse h-full flex flex-col">
+                  {/* Skeleton Image */}
+                  <div className="w-full h-64 bg-gray-700/50" />
+                  
+                  {/* Skeleton Content */}
+                  <div className="p-6 space-y-4 flex-1">
+                    <div className="h-8 bg-gray-700/50 rounded w-3/4" />
+                    <div className="h-6 bg-gray-700/50 rounded w-1/4" />
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-700/50 rounded" />
+                      <div className="h-4 bg-gray-700/50 rounded w-5/6" />
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <div className="h-6 w-16 bg-gray-700/50 rounded-full" />
+                      <div className="h-6 w-20 bg-gray-700/50 rounded-full" />
+                    </div>
+                  </div>
+                  
+                  {/* Loading text */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center">
+                    <p className="text-purple-400 text-sm font-medium">Loading products...</p>
+                  </div>
+                </div>
               </motion.div>
             ) : currentProduct ? (
               <ProductCard
@@ -358,38 +496,56 @@ export default function SwipeFeed() {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-4 pb-6 sm:px-6 sm:pb-8">
-        <div className="max-w-md mx-auto flex justify-center items-center gap-6 sm:gap-8">
+      {/* TikTok-Style Vertical Action Buttons - Bottom Right */}
+      <div className="absolute bottom-24 right-4 sm:right-6 z-30 flex flex-col gap-4">
+        <Button
+          size="icon"
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
+          onClick={() => handleSwipe('like')}
+          disabled={!currentProduct}
+        >
+          <Heart className="w-7 h-7 text-purple-500" />
+        </Button>
+
+        <Button
+          size="icon"
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
+          onClick={() => handleSwipe('dislike')}
+          disabled={!currentProduct}
+        >
+          <X className="w-7 h-7 text-purple-500" />
+        </Button>
+
+        <Button
+          size="icon"
+          variant="outline"
+          className={`w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md ${
+            currentProduct && isItemSaved(currentProduct.id) ? 'bg-purple-500/30' : ''
+          }`}
+          onClick={handleSave}
+          disabled={!currentProduct}
+        >
+          <Bookmark className={`w-6 h-6 text-purple-500 ${
+            currentProduct && isItemSaved(currentProduct.id) ? 'fill-purple-500' : ''
+          }`} />
+        </Button>
+
+        <Link to="/checkout">
           <Button
             size="icon"
             variant="outline"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-red-500 hover:bg-red-500/10 hover:scale-110 transition-all duration-200 shadow-lg shadow-red-500/20"
-            onClick={() => handleSwipe('dislike')}
-            disabled={!currentProduct}
+            className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
           >
-            <X className="w-7 h-7 sm:w-8 sm:h-8 text-red-500" />
+            <ShoppingCart className="w-6 h-6 text-purple-500" />
           </Button>
-          
-          <Button
-            size="icon"
-            variant="outline"
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-green-500 hover:bg-green-500/10 hover:scale-110 transition-all duration-200 shadow-lg shadow-green-500/20"
-            onClick={() => handleSwipe('like')}
-            disabled={!currentProduct}
-          >
-            <Heart className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
-          </Button>
-        </div>
-        
-        <p className="text-center text-xs text-gray-500 mt-4 sm:mt-6">
-          Swipe right to like • Swipe left to pass
-        </p>
+        </Link>
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg">
-        <div className="max-w-md mx-auto flex justify-around py-3 px-4">
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg flex-shrink-0">
+        <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
           <Link to="/feed" className="flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
             <Home className="w-6 h-6" />
             <span className="text-xs font-medium">Feed</span>

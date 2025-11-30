@@ -1,13 +1,15 @@
 from flask import Blueprint, jsonify, request
 from db_service import get_all, get_by_id, create_record, update_record, delete_record
+from .products import get_products_from_supabase
+from supabase_client import supabase
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
 @dashboard_bp.route("/products", methods=["GET"])
-def fetch_all():
-    data = get_all("products")
-    return jsonify(data)
+def list_products():
+   products = get_products_from_supabase()
+   return jsonify(products)
 
 
 @dashboard_bp.route("/products/<int:product_id>", methods=["GET"])
