@@ -8,6 +8,7 @@ import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import SavedItems from './pages/SavedItems';
+import Dashboard from './pages/Dashboard';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -72,6 +73,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SavedItems />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/products" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
               </ProtectedRoute>
             } 
           />
