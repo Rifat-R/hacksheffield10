@@ -27,3 +27,7 @@ backend/
 ## One-command dev
 - From repo root: `./run.sh`
   - Starts Flask (uses `.venv` if present) and Vite dev server. Ctrl+C stops both.
+
+# Additional Links
+[Planning GDoc](https://docs.google.com/document/d/1MT4SdZLEC-bVpvp3wWrfG7ge-RsYMCVKf6VB3071ums/edit?tab=t.0)
+[DevPost](https://devpost.com/software/trendswipe?ref_content=my-projects-tab&ref_feature=my_projects)
