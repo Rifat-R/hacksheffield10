@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 import numpy as np
+from postgrest.exceptions import APIError
 from supabase_client import supabase
 from helpers.algorithm import get_next_best_product
 
@@ -11,55 +12,101 @@ ALPHA = 0.1  # learning rate; higher = adapt faster
 USER_ID = 1
 
 
-def get_product_embedding(product_id: int) -> np.ndarray:
-    res = (
-        supabase.table("products")
-        .select("embedding")
-        .eq("id", product_id)
-        .single()
-        .execute()
-    )
-    data = res.data
+def get_product_embedding(product_id: int) -> np.ndarray | None:
+    try:
+        res = (
+            supabase.table("products")
+            .select("embedding")
+            .eq("id", product_id)
+            .single()
+            .execute()
+        )
+        data = res.data
+    except APIError as exc:
+        # PostgREST returns 204 when no row matches; treat as missing embedding
+        if getattr(exc, "code", None) == "204" or "Missing response" in str(exc):
+            print(
+                f"[swipes] No product row for id={product_id} when fetching embedding"
+            )
+            return None
+        raise
+
     if not data or data.get("embedding") is None:
-        raise ValueError("Product embedding not found")
+        print(f"[swipes] Product {product_id} has no embedding column/data.")
+        return None
     raw = data["embedding"]
     if isinstance(raw, str):
         try:
             import json
+
             raw = json.loads(raw)
         except Exception:
-            raise ValueError("Product embedding is stored as a string that could not be parsed.")
+            raise ValueError(
+                "Product embedding is stored as a string that could not be parsed."
+            )
     # Supabase returns arrays as Python lists
     return np.array(raw, dtype=float)
 
 
 def get_user_profile(user_id: int):
-    res = (
-        supabase.table("users")
-        .select("embedding, liked_count")
-        .eq("user_id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    data = res.data
+    try:
+        res = (
+            supabase.table("users")
+            .select("embedding, total_likes, total_dislikes")
+            .eq("id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        data = res.data
+    except APIError as exc:
+        if getattr(exc, "code", None) == "204" or "Missing response" in str(exc):
+            print(
+                f"[swipes] No user row for user_id={user_id}; treating as cold start."
+            )
+            return None
+        raise
+
     if not data:
         return None
-    embedding = np.array(data["embedding"], dtype=float)
-    liked_count = data["liked_count"]
-    return embedding, liked_count
+    raw = data.get("embedding")
+    if isinstance(raw, str):
+        try:
+            import json
+
+            raw = json.loads(raw)
+        except Exception:
+            print(
+                f"[swipes] User {user_id} embedding stored as string could not be parsed"
+            )
+            return None
+    embedding = np.array(raw, dtype=float)
+    total_likes = data.get("total_likes") or 0
+    total_dislikes = data.get("total_dislikes") or 0
+    return embedding, total_likes, total_dislikes
 
 
-def upsert_user_profile(user_id: int, embedding: np.ndarray, liked_count: int):
+def upsert_user_profile(
+    user_id: int, embedding: np.ndarray, total_likes: int, total_dislikes: int
+):
     payload = {
-        "user_id": user_id,
+        "id": user_id,
         "embedding": embedding.tolist(),  # Supabase expects list
-        "liked_count": liked_count,
+        "total_likes": total_likes,
+        "total_dislikes": total_dislikes,
     }
-    supabase.table("users").upsert(payload, on_conflict="user_id").execute()
+    supabase.table("users").upsert(payload, on_conflict="id").execute()
 
 
 def update_user_embedding(user_id: int, product_id: int, liked: bool):
+    print(
+        f"[swipes] Updating embedding for user {user_id}, product {product_id}, liked={liked}"
+    )
     e = get_product_embedding(product_id)
+    if e is None:
+        print(
+            f"[swipes] Skipping embedding update; product {product_id} missing embedding/row."
+        )
+        return
 
     existing = get_user_profile(user_id)
 
@@ -68,15 +115,18 @@ def update_user_embedding(user_id: int, product_id: int, liked: bool):
     if existing is None:
         # First time we see this user: start their vector from this swipe
         u_new = direction * e
-        liked_count = 1 if liked else 0
+        total_likes = 1 if liked else 0
+        total_dislikes = 0 if liked else 1
     else:
-        u, liked_count = existing
+        u, total_likes, total_dislikes = existing
         # Simple exponential moving average
         u_new = (1 - ALPHA) * u + ALPHA * direction * e
         if liked:
-            liked_count += 1
+            total_likes += 1
+        else:
+            total_dislikes += 1
 
-    upsert_user_profile(user_id, u_new, liked_count)
+    upsert_user_profile(user_id, u_new, total_likes, total_dislikes)
 
 
 @swiped_bp.route("/register-swipe", methods=["POST"])
@@ -85,6 +135,9 @@ def swipe():
     user_id = USER_ID
     product_id = int(data["product_id"])
     liked = bool(data["liked"])
+    print(
+        f"[swipes] Incoming swipe payload user={user_id} product={product_id} liked={liked}"
+    )
 
     supabase.table("user_products").upsert(
         {
@@ -99,7 +152,7 @@ def swipe():
         update_user_embedding(user_id, product_id, liked)
     except Exception as e:
         # log / handle, but don't crash the request
-        print("Error updating embedding:", e)
+        print(f"[swipes] Error updating embedding for product {product_id}: {e!r}")
 
     return jsonify({"status": "ok"})
 

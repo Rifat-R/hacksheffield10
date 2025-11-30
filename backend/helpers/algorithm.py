@@ -5,13 +5,30 @@ from postgrest.exceptions import APIError
 EMBED_DIM = 768  # set this to match your actual embedding dimension
 
 
+def parse_embedding(raw) -> np.ndarray | None:
+    """Parse embedding that may be stored as list or JSON string."""
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        try:
+            import json
+
+            raw = json.loads(raw)
+        except Exception:
+            return None
+    try:
+        return np.array(raw, dtype=float)
+    except Exception:
+        return None
+
+
 def get_user_profile_embedding(user_id: int) -> np.ndarray | None:
     """Return the user's embedding as a NumPy array, or None if no profile yet."""
     try:
         res = (
             supabase.table("users")
             .select("embedding")
-            .eq("user_id", user_id)
+            .eq("id", user_id)
             .maybe_single()
             .execute()
         )
@@ -24,7 +41,7 @@ def get_user_profile_embedding(user_id: int) -> np.ndarray | None:
 
     if not data or data.get("embedding") is None:
         return None
-    return np.array(data["embedding"], dtype=float)
+    return parse_embedding(data.get("embedding"))
 
 
 def get_seen_product_ids(user_id: int) -> set[int]:
@@ -103,11 +120,11 @@ def get_next_best_product(user_id: int) -> dict | None:
     best_score = -1.0
 
     for product in candidates:
-        emb_list = product.get("embedding")
-        if not emb_list:
+        emb_list = parse_embedding(product.get("embedding"))
+        if emb_list is None or emb_list.size == 0:
             # skip products without an embedding
             continue
-        p_emb = np.array(emb_list, dtype=float)
+        p_emb = emb_list
         if p_emb.shape[0] != EMBED_DIM:
             # skip if dimension doesn’t match
             continue
