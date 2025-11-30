@@ -85,6 +85,8 @@ export default function Profile() {
 
   const handleReset = () => {
     clearProfile();
+    // Clear odyssey progress from localStorage
+    localStorage.removeItem('odyssey_progress');
     navigate('/setup');
   };
 

@@ -1,85 +1,345 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { X, Home, Bookmark, User, ShoppingCart, Map, Sparkles, Lock, CheckCircle2, Trophy, Star, Zap, Crown, Gift, ChevronRight } from 'lucide-react';
+import { X, Home, Bookmark, User, ShoppingCart, Map, Sparkles, Lock, CheckCircle2, Trophy, Star, Crown, ChevronRight, ScrollText, Heart, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { api } from '../lib/api';
 
-// Fashion destination data with styles and coordinates
-const FASHION_DESTINATIONS = [
+// Realm definitions with quests
+const REALMS = [
   {
-    id: 'streetwear',
-    name: 'Urban Streets',
-    emoji: '🏙️',
-    description: 'Bold, casual, and edgy street fashion',
+    slug: "realm_minimalism",
+    name: "Realm of Minimalism",
+    shortTitle: "Minimalism",
+    emoji: "⚪",
+    description: "Clean lines, neutral tones, and quiet confidence.",
+    lore: "Minimalism is all about quiet confidence. Clean lines, neutral tones, and timeless pieces come together to create a look that feels effortless but intentional. It’s style that speaks softly—yet says everything.",
+    unlockEssence: 0,
+    orderIndex: 1,
     position: 78,
-    color: 'from-orange-500 to-red-500',
-    styles: ['streetwear', 'urban', 'hip-hop', 'skater'],
-    unlocked: true,
-    level: 1,
-    xpRequired: 0,
+    color: "from-gray-400 to-gray-600",
+    primaryTags: ["minimal", "neutral", "clean"],
+    quests: [
+      {
+        id: "discover_3_items",
+        label: "Discover 3 Artifacts",
+        description: "Open three items that align with minimalist style.",
+        essenceReward: 3,
+      },
+      {
+        id: "like_3_items",
+        label: "Choose Your Favorites",
+        description: "Like three minimalist items on your path.",
+        essenceReward: 5,
+      },
+      {
+        id: "read_lore",
+        label: "Read the Realm Lore",
+        description: "Open and read the lore scroll of this realm.",
+        essenceReward: 2,
+      },
+    ],
   },
   {
-    id: 'minimalist',
-    name: 'Minimalist Haven',
-    emoji: '⚪',
-    description: 'Clean lines, neutral colors, timeless elegance',
+    slug: "realm_streetwear",
+    name: "Realm of Streetwear Docks",
+    shortTitle: "Streetwear",
+    emoji: "🏙️",
+    description: "Bold logos, layered fits, and city-born attitude.",
+    lore: "Streetwear is built on attitude and ease. Oversized layers, bold graphics, and worn-in sneakers come together to create a look that feels effortless but full of personality. It’s style that moves with you",
+    unlockEssence: 10,
+    prerequisiteSlug: "realm_minimalism",
+    orderIndex: 2,
     position: 65,
-    color: 'from-gray-400 to-gray-600',
-    styles: ['minimalist', 'modern', 'scandinavian'],
-    unlocked: true,
-    level: 2,
-    xpRequired: 100,
+    color: "from-orange-500 to-red-500",
+    primaryTags: ["streetwear", "casual", "bold"],
+    quests: [
+      { id: "discover_3_items", label: "Scout the Docks", description: "View three streetwear items.", essenceReward: 3 },
+      { id: "like_3_items", label: "Claim Your Look", description: "Like three streetwear pieces.", essenceReward: 5 },
+      { id: "read_lore", label: "Hear the Pulse", description: "Read the lore of the Streetwear Docks.", essenceReward: 2 },
+    ],
   },
   {
-    id: 'vintage',
-    name: 'Vintage Valley',
-    emoji: '🕰️',
-    description: 'Retro vibes from the golden eras',
+    slug: "realm_soft_academia",
+    name: "Realm of Soft Academia",
+    shortTitle: "Soft Academia",
+    emoji: "📚",
+    description: "Cozy knits, warm tones, and quiet study vibes.",
+    lore: "Soft Academia is all about warmth and quiet charm. Cozy knits, pleats, and well loved layers create a look that feels thoughtful and intimate, like a favorite story you keep returning to. It’s style that’s gentle, nostalgic, and deeply personal.",
+    unlockEssence: 20,
+    prerequisiteSlug: "realm_minimalism",
+    orderIndex: 3,
     position: 52,
-    color: 'from-amber-500 to-yellow-600',
-    styles: ['vintage', 'retro', '70s', '80s', '90s'],
-    unlocked: false,
-    level: 3,
-    xpRequired: 250,
+    color: "from-amber-500 to-yellow-600",
+    primaryTags: ["soft", "cozy", "neutral"],
+    quests: [
+      { id: "discover_3_items", label: "Browse the Library", description: "View three soft academia items.", essenceReward: 3 },
+      { id: "like_3_items", label: "Choose Your Study Fit", description: "Like three items from this realm.", essenceReward: 5 },
+      { id: "read_lore", label: "Read the Lore", description: "Open the lore scroll of this realm.", essenceReward: 2 },
+    ],
   },
   {
-    id: 'bohemian',
-    name: 'Boho Beach',
-    emoji: '🌺',
-    description: 'Free-spirited, artistic, and eclectic',
+    slug: "realm_monochrome",
+    name: "Realm of Monochrome",
+    shortTitle: "Monochrome",
+    emoji: "🖤",
+    description: "Black, white, and the spectrum between.",
+    lore: "With a monochrome style, color fades to shadow and light. Every garment is a study in contrast- bold, sharp, and timeless. With monochrome, less is always more.",
+    unlockEssence: 35,
+    prerequisiteSlug: "realm_minimalism",
+    orderIndex: 4,
     position: 39,
-    color: 'from-pink-500 to-purple-500',
-    styles: ['bohemian', 'boho', 'hippie', 'festival'],
-    unlocked: false,
-    level: 4,
-    xpRequired: 450,
+    color: "from-slate-700 to-zinc-900",
+    primaryTags: ["monochrome", "black", "white"],
+    quests: [
+      { id: "discover_3_items", label: "See in Black & White", description: "View three monochrome items.", essenceReward: 3 },
+      { id: "like_3_items", label: "Embrace Contrast", description: "Like three monochrome pieces.", essenceReward: 5 },
+      { id: "read_lore", label: "Read the Lore", description: "Discover the monochrome philosophy.", essenceReward: 2 },
+    ],
   },
   {
-    id: 'formal',
-    name: 'Elegance Plaza',
-    emoji: '👔',
-    description: 'Sophisticated, refined, and professional',
+    slug: "realm_earthbound",
+    name: "Realm of Earthbound Neutrals",
+    shortTitle: "Earthbound",
+    emoji: "🌾",
+    description: "Warm tones inspired by nature.",
+    lore: "The earthbound style embraces soft tones like terracotta, sage, and sand. Express yourself through organic, grounded, and endlessly comforting styles.",
+    unlockEssence: 50,
+    prerequisiteSlug: "realm_soft_academia",
+    orderIndex: 5,
     position: 26,
-    color: 'from-blue-600 to-indigo-700',
-    styles: ['formal', 'business', 'professional', 'elegant'],
-    unlocked: false,
-    level: 5,
-    xpRequired: 700,
+    color: "from-amber-600 to-green-700",
+    primaryTags: ["earth", "natural", "warm"],
+    quests: [
+      { id: "discover_3_items", label: "Walk the Earth", description: "View three earthbound items.", essenceReward: 3 },
+      { id: "like_3_items", label: "Ground Yourself", description: "Like three earth-toned pieces.", essenceReward: 5 },
+      { id: "read_lore", label: "Read the Lore", description: "Learn about earthbound style.", essenceReward: 2 },
+    ],
   },
   {
-    id: 'athletic',
-    name: 'Sporty Summit',
-    emoji: '⚡',
-    description: 'Performance meets style',
+    slug: "realm_techwear",
+    name: "Realm of Techwear",
+    shortTitle: "Techwear",
+    emoji: "🔮",
+    description: "Futuristic utility meets urban armor.",
+    lore: "Transport yourself to the future with techwear. Functional zippers, waterproof fabrics, and modular designs turn clothing into equipment",
+    unlockEssence: 70,
+    prerequisiteSlug: "realm_streetwear",
+    orderIndex: 6,
     position: 13,
-    color: 'from-green-500 to-teal-600',
-    styles: ['athletic', 'sporty', 'activewear', 'performance'],
-    unlocked: false,
-    level: 6,
-    xpRequired: 1000,
+    color: "from-cyan-600 to-blue-800",
+    primaryTags: ["tech", "functional", "future"],
+    quests: [
+      { id: "discover_3_items", label: "Scout the Tech", description: "View three techwear items.", essenceReward: 3 },
+      { id: "like_3_items", label: "Gear Up", description: "Like three techwear pieces.", essenceReward: 5 },
+      { id: "read_lore", label: "Read the Lore", description: "Understand techwear philosophy.", essenceReward: 2 },
+    ],
   },
 ];
+
+// Initialize progress state from localStorage
+const INITIAL_PROGRESS = {
+  totalEssence: 0,
+  realmProgress: REALMS.reduce((acc, realm) => {
+    acc[realm.slug] = {
+      status: realm.slug === "realm_minimalism" ? "UNLOCKED" : "LOCKED",
+      questsCompleted: [],
+      viewedCount: 0,
+      likedCount: 0,
+    };
+    return acc;
+  }, {}),
+};
+
+// Hook for managing odyssey progress
+function useOdysseyProgress() {
+  const [progress, setProgress] = useState(() => {
+    try {
+      const stored = localStorage.getItem("odyssey_progress");
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return INITIAL_PROGRESS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("odyssey_progress", JSON.stringify(progress));
+  }, [progress]);
+
+  const addEssence = (amount) => {
+    setProgress((prev) => {
+      const updated = {
+        ...prev,
+        totalEssence: prev.totalEssence + amount,
+      };
+      return unlockRealmsFromEssence(updated);
+    });
+  };
+
+  const completeQuest = (realmSlug, questId, rewardEssence) => {
+    setProgress((prev) => {
+      const realmProg = prev.realmProgress[realmSlug];
+      if (!realmProg || realmProg.questsCompleted.includes(questId)) return prev;
+
+      const realm = REALMS.find(r => r.slug === realmSlug);
+      if (!realm) return prev;
+
+      const updatedRealmProg = {
+        ...realmProg,
+        questsCompleted: [...realmProg.questsCompleted, questId],
+      };
+
+      const updatedTotalEssence = prev.totalEssence + rewardEssence;
+
+      // Check if all quests are completed (MASTERED)
+      const allQuestIds = realm.quests.map((q) => q.id);
+      const allCompleted = allQuestIds.every((id) =>
+        updatedRealmProg.questsCompleted.includes(id)
+      );
+
+      if (allCompleted) {
+        updatedRealmProg.status = "MASTERED";
+      }
+
+      const updated = {
+        ...prev,
+        totalEssence: updatedTotalEssence,
+        realmProgress: {
+          ...prev.realmProgress,
+          [realmSlug]: updatedRealmProg,
+        },
+      };
+
+      return unlockRealmsFromEssence(updated);
+    });
+  };
+
+  const unlockRealmsFromEssence = (state) => {
+    const updatedRealmProgress = { ...state.realmProgress };
+    REALMS.forEach((realm) => {
+      const current = updatedRealmProgress[realm.slug];
+      if (current.status === "LOCKED") {
+        const prereqOk =
+          !realm.prerequisiteSlug ||
+          updatedRealmProgress[realm.prerequisiteSlug]?.status !== "LOCKED";
+        if (prereqOk && state.totalEssence >= realm.unlockEssence) {
+          updatedRealmProgress[realm.slug] = {
+            ...current,
+            status: "UNLOCKED",
+          };
+        }
+      }
+    });
+    return {
+      ...state,
+      realmProgress: updatedRealmProgress,
+    };
+  };
+
+  const trackItemView = (realmSlug) => {
+    setProgress((prev) => {
+      const realmProg = prev.realmProgress[realmSlug];
+      if (!realmProg) return prev;
+
+      const newCount = realmProg.viewedCount + 1;
+      const updated = {
+        ...prev,
+        realmProgress: {
+          ...prev.realmProgress,
+          [realmSlug]: {
+            ...realmProg,
+            viewedCount: newCount,
+          },
+        },
+      };
+
+      // Check if discover quest should be completed (3 views)
+      if (newCount === 3 && !realmProg.questsCompleted.includes('discover_3_items')) {
+        const realm = REALMS.find(r => r.slug === realmSlug);
+        const quest = realm?.quests.find(q => q.id === 'discover_3_items');
+        if (quest) {
+          return completeQuestInternal(updated, realmSlug, 'discover_3_items', quest.essenceReward);
+        }
+      }
+
+      return updated;
+    });
+  };
+
+  const trackItemLike = (realmSlug) => {
+    setProgress((prev) => {
+      const realmProg = prev.realmProgress[realmSlug];
+      if (!realmProg) return prev;
+
+      const newCount = realmProg.likedCount + 1;
+      const updated = {
+        ...prev,
+        realmProgress: {
+          ...prev.realmProgress,
+          [realmSlug]: {
+            ...realmProg,
+            likedCount: newCount,
+          },
+        },
+      };
+
+      // Check if like quest should be completed (3 likes)
+      if (newCount === 3 && !realmProg.questsCompleted.includes('like_3_items')) {
+        const realm = REALMS.find(r => r.slug === realmSlug);
+        const quest = realm?.quests.find(q => q.id === 'like_3_items');
+        if (quest) {
+          return completeQuestInternal(updated, realmSlug, 'like_3_items', quest.essenceReward);
+        }
+      }
+
+      return updated;
+    });
+  };
+
+  const completeQuestInternal = (state, realmSlug, questId, rewardEssence) => {
+    const realmProg = state.realmProgress[realmSlug];
+    if (realmProg.questsCompleted.includes(questId)) return state;
+
+    const realm = REALMS.find(r => r.slug === realmSlug);
+    if (!realm) return state;
+
+    const updatedRealmProg = {
+      ...realmProg,
+      questsCompleted: [...realmProg.questsCompleted, questId],
+    };
+
+    const updatedTotalEssence = state.totalEssence + rewardEssence;
+
+    // Check if all quests are completed (MASTERED)
+    const allQuestIds = realm.quests.map((q) => q.id);
+    const allCompleted = allQuestIds.every((id) =>
+      updatedRealmProg.questsCompleted.includes(id)
+    );
+
+    if (allCompleted) {
+      updatedRealmProg.status = "MASTERED";
+    }
+
+    const updated = {
+      ...state,
+      totalEssence: updatedTotalEssence,
+      realmProgress: {
+        ...state.realmProgress,
+        [realmSlug]: updatedRealmProg,
+      },
+    };
+
+    return unlockRealmsFromEssence(updated);
+  };
+
+  return {
+    progress,
+    addEssence,
+    completeQuest,
+    trackItemView,
+    trackItemLike,
+  };
+}
 
 // Particle animation component
 function FloatingParticle({ delay = 0 }) {
@@ -105,13 +365,13 @@ function FloatingParticle({ delay = 0 }) {
 }
 
 // Achievement unlock animation
-function AchievementUnlock({ destination, onComplete }) {
+function AchievementUnlock({ realm, onComplete }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0 }}
-      className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center"
+      className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center"
     >
       <motion.div
         initial={{ y: 100, opacity: 0 }}
@@ -138,7 +398,7 @@ function AchievementUnlock({ destination, onComplete }) {
           transition={{ delay: 0.5 }}
           className="text-5xl font-bold text-white mb-4"
         >
-          Destination Unlocked!
+          Realm Unlocked!
         </motion.h2>
         
         <motion.div
@@ -147,7 +407,7 @@ function AchievementUnlock({ destination, onComplete }) {
           transition={{ delay: 0.7, type: 'spring' }}
           className="text-7xl mb-4"
         >
-          {destination.emoji}
+          {realm.emoji}
         </motion.div>
         
         <motion.p
@@ -156,7 +416,7 @@ function AchievementUnlock({ destination, onComplete }) {
           transition={{ delay: 0.9 }}
           className="text-3xl text-purple-300 mb-8"
         >
-          {destination.name}
+          {realm.name}
         </motion.p>
         
         <motion.div
@@ -199,15 +459,15 @@ function AchievementUnlock({ destination, onComplete }) {
   );
 }
 
-// XP Progress Bar
-function XPProgressBar({ currentXP, nextLevelXP, level }) {
-  const progress = (currentXP / nextLevelXP) * 100;
+// Essence Progress Bar
+function EssenceProgressBar({ currentEssence, nextUnlockEssence }) {
+  const progress = nextUnlockEssence > 0 ? (currentEssence / nextUnlockEssence) * 100 : 100;
   
   return (
     <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden relative">
       <motion.div
         initial={{ width: 0 }}
-        animate={{ width: `${progress}%` }}
+        animate={{ width: `${Math.min(progress, 100)}%` }}
         transition={{ duration: 1, ease: 'easeOut' }}
         className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 relative"
       >
@@ -225,35 +485,39 @@ function XPProgressBar({ currentXP, nextLevelXP, level }) {
       </motion.div>
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-xs font-bold text-white drop-shadow-lg">
-          {currentXP} / {nextLevelXP} XP
+          {currentEssence} Essence
         </span>
       </div>
     </div>
   );
 }
 
-function DestinationCard({ destination, onClick, isActive }) {
+function RealmCard({ realm, onClick, isActive, realmProgress }) {
   const [isHovered, setIsHovered] = useState(false);
+  const isUnlocked = realmProgress.status !== "LOCKED";
+  const isMastered = realmProgress.status === "MASTERED";
+  const questsCompleted = realmProgress.questsCompleted.length;
+  const totalQuests = realm.quests.length;
   
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      whileHover={{ scale: destination.unlocked ? 1.1 : 1.05 }}
-      whileTap={{ scale: destination.unlocked ? 0.95 : 1 }}
+      whileHover={{ scale: isUnlocked ? 1.1 : 1.05 }}
+      whileTap={{ scale: isUnlocked ? 0.95 : 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={`absolute left-1/2 -translate-x-1/2 cursor-pointer ${isActive ? 'z-30' : 'z-10'}`}
-      style={{ top: `${destination.position}%` }}
-      onClick={() => onClick(destination)}
+      style={{ top: `${realm.position}%` }}
+      onClick={() => onClick(realm)}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <div className={`relative w-32 h-32 rounded-full bg-gradient-to-br ${destination.color} shadow-2xl border-4 ${
-        isActive ? 'border-white' : 'border-gray-800'
+      <div className={`relative w-32 h-32 rounded-full bg-gradient-to-br ${realm.color} shadow-2xl border-4 ${
+        isActive ? 'border-white' : isMastered ? 'border-yellow-500' : 'border-gray-800'
       } flex flex-col items-center justify-center transition-all duration-300 overflow-hidden`}>
         
-        {/* Animated ring effect for unlocked destinations */}
-        {destination.unlocked && (
+        {/* Animated ring effect for unlocked realms */}
+        {isUnlocked && (
           <>
             <motion.div
               animate={{
@@ -265,7 +529,7 @@ function DestinationCard({ destination, onClick, isActive }) {
                 repeat: Infinity,
                 ease: 'easeInOut',
               }}
-              className="absolute inset-0 rounded-full border-4 border-white"
+              className={`absolute inset-0 rounded-full border-4 ${isMastered ? 'border-yellow-500' : 'border-white'}`}
             />
             <motion.div
               animate={{
@@ -281,7 +545,7 @@ function DestinationCard({ destination, onClick, isActive }) {
               {[...Array(8)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full"
+                  className={`absolute w-1 h-1 rounded-full ${isMastered ? 'bg-yellow-400' : 'bg-white'}`}
                   style={{
                     top: '50%',
                     left: '50%',
@@ -302,7 +566,7 @@ function DestinationCard({ destination, onClick, isActive }) {
           </>
         )}
         
-        {!destination.unlocked && (
+        {!isUnlocked && (
           <div className="absolute inset-0 bg-black/60 rounded-full backdrop-blur-sm flex items-center justify-center z-20">
             <motion.div
               animate={{
@@ -322,16 +586,26 @@ function DestinationCard({ destination, onClick, isActive }) {
         <motion.div
           className="text-5xl mb-2 relative z-10"
           animate={{
-            rotate: isHovered && destination.unlocked ? [0, -10, 10, -10, 0] : 0,
+            rotate: isHovered && isUnlocked ? [0, -10, 10, -10, 0] : 0,
           }}
           transition={{
             duration: 0.5,
           }}
         >
-          {destination.emoji}
+          {realm.emoji}
         </motion.div>
         
-        {destination.unlocked && (
+        {isMastered && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-2 -right-2 bg-yellow-500 rounded-full p-1 z-20"
+          >
+            <Crown className="w-5 h-5 text-white" />
+          </motion.div>
+        )}
+        
+        {isUnlocked && !isMastered && questsCompleted > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -341,14 +615,16 @@ function DestinationCard({ destination, onClick, isActive }) {
           </motion.div>
         )}
         
-        {/* Level badge */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute -bottom-2 bg-purple-900 border-2 border-purple-500 rounded-full px-3 py-1 z-20"
-        >
-          <span className="text-white text-xs font-bold">LV {destination.level}</span>
-        </motion.div>
+        {/* Quest progress badge */}
+        {isUnlocked && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className={`absolute -bottom-2 ${isMastered ? 'bg-yellow-500 border-yellow-600' : 'bg-purple-900 border-purple-500'} border-2 rounded-full px-3 py-1 z-20`}
+          >
+            <span className="text-white text-xs font-bold">{questsCompleted}/{totalQuests} Quests</span>
+          </motion.div>
+        )}
       </div>
       
       <AnimatePresence>
@@ -359,9 +635,12 @@ function DestinationCard({ destination, onClick, isActive }) {
             exit={{ opacity: 0, y: 10 }}
             className="text-center mt-3 bg-gray-900/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-purple-500/50"
           >
-            <p className="text-white font-bold text-sm">{destination.name}</p>
-            {!destination.unlocked && (
-              <p className="text-purple-400 text-xs mt-1">{destination.xpRequired} XP Required</p>
+            <p className="text-white font-bold text-sm">{realm.name}</p>
+            {!isUnlocked && (
+              <p className="text-purple-400 text-xs mt-1">{realm.unlockEssence} Essence Required</p>
+            )}
+            {isMastered && (
+              <p className="text-yellow-400 text-xs mt-1">✨ Mastered</p>
             )}
           </motion.div>
         )}
@@ -370,7 +649,69 @@ function DestinationCard({ destination, onClick, isActive }) {
   );
 }
 
-function DestinationDetail({ destination, onClose, products }) {
+function RealmDetail({ realm, onClose, realmProgress, onCompleteQuest, onTrackView, onTrackLike }) {
+  const [showLore, setShowLore] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [likedProducts, setLikedProducts] = useState(new Set());
+  const [viewedProducts, setViewedProducts] = useState(new Set());
+  const isUnlocked = realmProgress.status !== "LOCKED";
+  const isMastered = realmProgress.status === "MASTERED";
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getProducts(50, 0);
+      const allProducts = response.products || response;
+      
+      // Randomly select 6 products for this realm
+      const shuffled = [...allProducts].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, 6);
+      setProducts(selected);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isUnlocked) {
+      fetchProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUnlocked]);
+
+  const handleViewLore = () => {
+    setShowLore(true);
+    if (!realmProgress.questsCompleted.includes("read_lore")) {
+      const loreQuest = realm.quests.find(q => q.id === "read_lore");
+      if (loreQuest) {
+        onCompleteQuest(realm.slug, "read_lore", loreQuest.essenceReward);
+      }
+    }
+  };
+
+  const handleViewProduct = (productId) => {
+    if (!viewedProducts.has(productId)) {
+      setViewedProducts(prev => new Set([...prev, productId]));
+      onTrackView(realm.slug);
+    }
+  };
+
+  const handleLikeProduct = (productId) => {
+    if (!likedProducts.has(productId)) {
+      setLikedProducts(prev => new Set([...prev, productId]));
+      onTrackLike(realm.slug);
+    } else {
+      setLikedProducts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -388,25 +729,26 @@ function DestinationDetail({ destination, onClose, products }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`bg-gradient-to-br ${destination.color} p-6 relative overflow-hidden`}>
+        <div className={`bg-gradient-to-br ${realm.color} p-6 relative overflow-hidden`}>
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: [0, 1.2, 1] }}
             transition={{ duration: 0.5 }}
             className="text-8xl absolute right-4 top-1/2 -translate-y-1/2 opacity-20"
           >
-            {destination.emoji}
+            {realm.emoji}
           </motion.div>
           
           <div className="relative z-10">
             <Badge className="mb-3 bg-white/20 backdrop-blur-md border-white/30">
-              {destination.unlocked ? '✓ Unlocked' : '🔒 Locked'}
+              {isMastered ? '👑 Mastered' : isUnlocked ? '✓ Unlocked' : '🔒 Locked'}
             </Badge>
             <h2 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <span className="text-5xl">{destination.emoji}</span>
-              {destination.name}
+              <span className="text-5xl">{realm.emoji}</span>
+              {realm.name}
             </h2>
-            <p className="text-white/90 text-lg">{destination.description}</p>
+            <p className="text-white/90 text-lg">{realm.description}</p>
+            <p className="text-white/70 text-sm mt-2 italic">Part of your Fashion Odyssey</p>
           </div>
           
           <button
@@ -419,56 +761,155 @@ function DestinationDetail({ destination, onClose, products }) {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {destination.unlocked ? (
+          {isUnlocked ? (
             <>
-              <div className="flex gap-2 flex-wrap mb-6">
-                {destination.styles.map((style, idx) => (
+              {/* Lore Section */}
+              <div className="mb-6">
+                <Button
+                  onClick={handleViewLore}
+                  variant="outline"
+                  className="w-full justify-start border-purple-500/50 text-purple-300 hover:bg-purple-500/10"
+                >
+                  <ScrollText className="w-5 h-5 mr-2" />
+                  {showLore ? 'Lore Revealed' : 'View Realm Lore'}
+                  {realmProgress.questsCompleted.includes("read_lore") && (
+                    <CheckCircle2 className="w-4 h-4 ml-auto text-green-500" />
+                  )}
+                </Button>
+                
+                {showLore && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mt-3 p-4 bg-gray-800/50 rounded-lg border border-purple-500/30"
+                  >
+                    <p className="text-gray-300 leading-relaxed italic">{realm.lore}</p>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Quests Section */}
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-500" />
+                  Realm Quests
+                </h3>
+                <div className="space-y-3">
+                  {realm.quests.map((quest) => {
+                    const isCompleted = realmProgress.questsCompleted.includes(quest.id);
+                    return (
+                      <motion.div
+                        key={quest.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`p-4 rounded-lg border ${
+                          isCompleted 
+                            ? 'bg-green-500/10 border-green-500/50' 
+                            : 'bg-gray-800/50 border-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="text-white font-semibold flex items-center gap-2">
+                              {isCompleted && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                              {quest.label}
+                            </h4>
+                            <p className="text-gray-400 text-sm mt-1">{quest.description}</p>
+                          </div>
+                          <Badge variant="outline" className="ml-2 border-purple-500/50 text-purple-300">
+                            +{quest.essenceReward} Essence
+                          </Badge>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Products Section */}
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-purple-500" />
+                  Realm Artifacts ({realmProgress.viewedCount}/3 viewed, {realmProgress.likedCount}/3 liked)
+                </h3>
+                
+                {loading ? (
+                  <div className="text-center py-12">
+                    <Sparkles className="w-16 h-16 text-purple-500 mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-400">Discovering artifacts...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {products.map((product) => {
+                      const isViewed = viewedProducts.has(product.id);
+                      const isLiked = likedProducts.has(product.id);
+                      
+                      return (
+                        <motion.div
+                          key={product.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500/50 transition-all group relative"
+                          onClick={() => handleViewProduct(product.id)}
+                        >
+                          <div className="aspect-square bg-gray-700 relative overflow-hidden">
+                            <img
+                              src={product.images?.[0] || product.image || 'https://via.placeholder.com/300?text=Fashion'}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                            {isViewed && (
+                              <div className="absolute top-2 left-2 bg-purple-600 rounded-full p-1">
+                                <Eye className="w-4 h-4 text-white" />
+                              </div>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLikeProduct(product.id);
+                              }}
+                              className="absolute top-2 right-2 bg-gray-900/80 hover:bg-gray-900 rounded-full p-2 transition-colors"
+                            >
+                              <Heart
+                                className={`w-5 h-5 transition-colors ${
+                                  isLiked ? 'fill-red-500 text-red-500' : 'text-white'
+                                }`}
+                              />
+                            </button>
+                          </div>
+                          <div className="p-3">
+                            <p className="text-white font-semibold text-sm line-clamp-1">{product.name || product.title}</p>
+                            <p className="text-purple-400 text-xs">${product.price || '0.00'}</p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Style Tags */}
+              <div className="flex gap-2 flex-wrap">
+                {realm.primaryTags.map((tag, idx) => (
                   <Badge key={idx} variant="outline" className="border-purple-500/50 text-purple-300">
-                    #{style}
+                    #{tag}
                   </Badge>
                 ))}
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((product, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700 hover:border-purple-500/50 transition-all group"
-                  >
-                    <div className="aspect-square bg-gray-700 relative overflow-hidden">
-                      <img
-                        src={product.image || 'https://via.placeholder.com/300?text=Fashion'}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-white font-semibold text-sm line-clamp-1">{product.name}</p>
-                      <p className="text-purple-400 text-xs">${product.price}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {products.length === 0 && (
-                <div className="text-center py-12">
-                  <Sparkles className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                  <p className="text-gray-400">Discovering styles from this destination...</p>
-                </div>
-              )}
             </>
           ) : (
             <div className="text-center py-12">
               <Lock className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">Destination Locked</h3>
-              <p className="text-gray-400 mb-6">
-                Complete previous destinations to unlock this fashion journey
+              <h3 className="text-2xl font-bold text-white mb-2">Realm Locked</h3>
+              <p className="text-gray-400 mb-4">
+                Gather {realm.unlockEssence} Essence to unlock this realm
               </p>
-              <Button className="bg-purple-600 hover:bg-purple-700">
+              {realm.prerequisiteSlug && (
+                <p className="text-purple-400 text-sm">
+                  Prerequisite: Master {REALMS.find(r => r.slug === realm.prerequisiteSlug)?.name}
+                </p>
+              )}
+              <Button className="bg-purple-600 hover:bg-purple-700 mt-6" onClick={onClose}>
                 Continue Journey
               </Button>
             </div>
@@ -480,14 +921,13 @@ function DestinationDetail({ destination, onClose, products }) {
 }
 
 export default function Explore() {
-  const [selectedDestination, setSelectedDestination] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [selectedRealm, setSelectedRealm] = useState(null);
   const [showAchievement, setShowAchievement] = useState(false);
-  const [unlockedDestination, setUnlockedDestination] = useState(null);
-  const [currentXP, setCurrentXP] = useState(150);
-  const [currentLevel, setCurrentLevel] = useState(2);
+  const [unlockedRealm, setUnlockedRealm] = useState(null);
   const scrollRef = useRef(null);
   const scrollY = useMotionValue(0);
+  
+  const { progress, completeQuest, trackItemView, trackItemLike } = useOdysseyProgress();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -503,31 +943,23 @@ export default function Explore() {
     }
   }, [scrollY]);
 
-  const handleDestinationClick = (destination) => {
-    if (!destination.unlocked) {
-      // Show locked message with animation
+  const handleRealmClick = (realm) => {
+    const realmProg = progress.realmProgress[realm.slug];
+    if (realmProg.status === "LOCKED") {
       return;
     }
-    
-    setSelectedDestination(destination);
-    
-    // Mock products for now - you can integrate with your API
-    const mockProducts = Array.from({ length: 6 }, (_, i) => ({
-      id: `${destination.id}-${i}`,
-      name: `${destination.name} Style ${i + 1}`,
-      price: (Math.random() * 100 + 20).toFixed(2),
-      image: null,
-    }));
-    
-    setProducts(mockProducts);
+    setSelectedRealm(realm);
   };
   
-  const handleUnlockDestination = (destination) => {
-    setUnlockedDestination(destination);
+  const handleUnlockRealm = (realm) => {
+    setUnlockedRealm(realm);
     setShowAchievement(true);
   };
   
-  const nextLevelXP = currentLevel * 150;
+  // Get next realm to unlock for progress bar
+  const lockedRealms = REALMS.filter(r => progress.realmProgress[r.slug].status === "LOCKED")
+    .sort((a, b) => a.unlockEssence - b.unlockEssence);
+  const nextUnlockEssence = lockedRealms.length > 0 ? lockedRealms[0].unlockEssence : progress.totalEssence;
 
   return (
     <div className="h-screen bg-gray-950 flex flex-col overflow-hidden relative">
@@ -615,28 +1047,24 @@ export default function Explore() {
               transition={{ delay: 0.2, type: 'spring' }}
               className="flex flex-col items-end gap-2"
             >
-              <Badge variant="secondary" className="bg-purple-600/20 border-purple-500/50 text-purple-300">
-                <Crown className="w-3 h-3 mr-1" />
-                Level {currentLevel}
-              </Badge>
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full px-2 py-1"
+                className="flex items-center gap-1 bg-purple-500/20 border border-purple-500/50 rounded-full px-3 py-1"
               >
-                <Star className="w-3 h-3 text-yellow-400" />
-                <span className="text-xs font-bold text-yellow-400">{currentXP} XP</span>
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-bold text-purple-300">{progress.totalEssence} Essence</span>
               </motion.div>
             </motion.div>
           </div>
           
-          {/* XP Progress Bar */}
+          {/* Essence Progress Bar */}
           <motion.div
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ delay: 0.3 }}
             className="origin-left"
           >
-            <XPProgressBar currentXP={currentXP} nextLevelXP={nextLevelXP} level={currentLevel} />
+            <EssenceProgressBar currentEssence={progress.totalEssence} nextUnlockEssence={nextUnlockEssence} />
           </motion.div>
         </div>
       </header>
@@ -699,13 +1127,14 @@ export default function Explore() {
             </defs>
           </svg>
 
-          {/* Destinations */}
-          {FASHION_DESTINATIONS.map((destination, idx) => (
-            <DestinationCard
-              key={destination.id}
-              destination={destination}
-              onClick={handleDestinationClick}
-              isActive={selectedDestination?.id === destination.id}
+          {/* Realms */}
+          {REALMS.map((realm) => (
+            <RealmCard
+              key={realm.slug}
+              realm={realm}
+              onClick={handleRealmClick}
+              isActive={selectedRealm?.slug === realm.slug}
+              realmProgress={progress.realmProgress[realm.slug]}
             />
           ))}
 
@@ -827,7 +1256,7 @@ export default function Explore() {
                     transform: `rotate(${i * 60}deg) translateY(-50px)`,
                   }}
                 >
-                  <Zap className="w-4 h-4 text-yellow-300" />
+                  <Star className="w-4 h-4 text-yellow-300" />
                 </motion.div>
               ))}
             </motion.div>
@@ -851,24 +1280,27 @@ export default function Explore() {
 
       {/* Achievement Unlock Animation */}
       <AnimatePresence>
-        {showAchievement && unlockedDestination && (
+        {showAchievement && unlockedRealm && (
           <AchievementUnlock
-            destination={unlockedDestination}
+            realm={unlockedRealm}
             onComplete={() => {
               setShowAchievement(false);
-              setUnlockedDestination(null);
+              setUnlockedRealm(null);
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* Destination Detail Modal */}
+      {/* Realm Detail Modal */}
       <AnimatePresence>
-        {selectedDestination && (
-          <DestinationDetail
-            destination={selectedDestination}
-            products={products}
-            onClose={() => setSelectedDestination(null)}
+        {selectedRealm && (
+          <RealmDetail
+            realm={selectedRealm}
+            realmProgress={progress.realmProgress[selectedRealm.slug]}
+            onClose={() => setSelectedRealm(null)}
+            onCompleteQuest={completeQuest}
+            onTrackView={trackItemView}
+            onTrackLike={trackItemLike}
           />
         )}
       </AnimatePresence>
