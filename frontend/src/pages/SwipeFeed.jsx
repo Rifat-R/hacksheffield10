@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { Heart, X, Info, Home, Bookmark, User, ShoppingCart } from 'lucide-react';
+import { Heart, X, Info, Home, Bookmark, User, ShoppingCart, Map } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFeedStore } from '../state/useFeedStore';
 import { useProfileStore } from '../state/useProfileStore';
@@ -564,6 +564,10 @@ export default function SwipeFeed() {
           <Link to="/saved" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <Bookmark className="w-6 h-6" />
             <span className="text-xs font-medium">Saved</span>
+          </Link>
+          <Link to="/explore" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Map className="w-6 h-6" />
+            <span className="text-xs font-medium">Explore</span>
           </Link>
           <Link to="/checkout" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <ShoppingCart className="w-6 h-6" />

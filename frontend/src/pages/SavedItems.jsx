@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, Heart, ShoppingCart, Trash2, Home, Bookmark, User, Map } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../state/useProfileStore';
 import { useCheckoutStore } from '../state/useCheckoutStore';
@@ -175,6 +175,32 @@ export default function SavedItems() {
         </div>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg">
+        <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
+          <Link to="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Home className="w-6 h-6" />
+            <span className="text-xs font-medium">Feed</span>
+          </Link>
+          <Link to="/saved" className="flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
+            <Bookmark className="w-6 h-6" />
+            <span className="text-xs font-medium">Saved</span>
+          </Link>
+          <Link to="/explore" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Map className="w-6 h-6" />
+            <span className="text-xs font-medium">Explore</span>
+          </Link>
+          <Link to="/checkout" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <ShoppingCart className="w-6 h-6" />
+            <span className="text-xs font-medium">Cart</span>
+          </Link>
+          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <User className="w-6 h-6" />
+            <span className="text-xs font-medium">Profile</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }
