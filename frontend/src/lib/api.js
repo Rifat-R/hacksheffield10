@@ -167,6 +167,63 @@ class APIClient {
   async getOrderHistory() {
     return this.request('/orders');
   }
+
+  // ==================== Dashboard CRUD ====================
+  
+  /**
+   * Get all dashboard products
+   * GET /api/dashboard/products
+   * Response: Array of products
+   */
+  async getDashboardProducts() {
+    return this.request('/dashboard/products');
+  }
+
+  /**
+   * Get single dashboard product
+   * GET /api/dashboard/products/:id
+   * Response: Single product object
+   */
+  async getDashboardProduct(productId) {
+    return this.request(`/dashboard/products/${productId}`);
+  }
+
+  /**
+   * Create new product
+   * POST /api/dashboard/products
+   * Body: { name, description, price, category, image_url, tags }
+   * Response: Created product with id
+   */
+  async createProduct(productData) {
+    return this.request('/dashboard/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  /**
+   * Update existing product
+   * PUT /api/dashboard/products/:id
+   * Body: { name, description, price, category, image_url, tags }
+   * Response: Updated product
+   */
+  async updateProduct(productId, updates) {
+    return this.request(`/dashboard/products/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  /**
+   * Delete product
+   * DELETE /api/dashboard/products/:id
+   * Response: Success message
+   */
+  async deleteProduct(productId) {
+    return this.request(`/dashboard/products/${productId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new APIClient();

@@ -1,12 +1,16 @@
 import { useState, useMemo, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, Info } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Home, Info, Plus, Edit2, Trash2, BarChart3 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import ProductFormModal from '../components/ProductFormModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import Toast from '../components/Toast';
+import { api } from '../lib/api';
 
 // Memoized product card component to prevent unnecessary re-renders
-const ProductCard = memo(({ product, onProductClick }) => {
+const ProductCard = memo(({ product, onProductClick, onEdit, onDelete }) => {
   return (
     <div
       onClick={() => onProductClick(product.id)}
@@ -21,7 +25,7 @@ const ProductCard = memo(({ product, onProductClick }) => {
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-gray-900/95" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-gray-900/95" />
           
           {/* Top Info - Price Badge */}
           <div className="absolute top-4 right-4">
@@ -75,11 +79,33 @@ const ProductCard = memo(({ product, onProductClick }) => {
             </div>
           )}
 
-          {/* View Details Link */}
-          <div className="mt-4 pt-3 border-t border-gray-800">
+          {/* Action Buttons */}
+          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
             <div className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-1.5 transition-colors font-medium">
               <Info className="w-4 h-4" />
               View details
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(product);
+                }}
+                className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                title="Edit product"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(product);
+                }}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Delete product"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -101,7 +127,17 @@ const fetchProducts = async () => {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [displayCount, setDisplayCount] = useState(24);
+  
+  // Modal states
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
+  
+  // Toast state
+  const [toast, setToast] = useState(null);
 
   // Use React Query for caching and automatic refetching
   const { data: products = [], isLoading, error, isError } = useQuery({
@@ -111,6 +147,89 @@ function Dashboard() {
     cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     refetchOnWindowFocus: false,
   });
+
+  // Create product mutation
+  const createMutation = useMutation({
+    mutationFn: (productData) => api.createProduct(productData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsFormModalOpen(false);
+      setSelectedProduct(null);
+      showToast('Product created successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to create product', 'error');
+    },
+  });
+
+  // Update product mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => api.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsFormModalOpen(false);
+      setSelectedProduct(null);
+      showToast('Product updated successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to update product', 'error');
+    },
+  });
+
+  // Delete product mutation
+  const deleteMutation = useMutation({
+    mutationFn: (productId) => api.deleteProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+      showToast('Product deleted successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to delete product', 'error');
+    },
+  });
+
+  // Show toast notification
+  const showToast = (message, type) => {
+    setToast({ message, type });
+  };
+
+  // Handle form submission
+  const handleFormSubmit = (formData) => {
+    if (selectedProduct) {
+      // Update existing product
+      updateMutation.mutate({ id: selectedProduct.id, data: formData });
+    } else {
+      // Create new product
+      createMutation.mutate(formData);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (productToDelete) {
+      deleteMutation.mutate(productToDelete.id);
+    }
+  };
+
+  // Handle edit action
+  const handleEdit = (product) => {
+    setSelectedProduct(product);
+    setIsFormModalOpen(true);
+  };
+
+  // Handle delete action
+  const handleDelete = (product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle add new product
+  const handleAddNew = () => {
+    setSelectedProduct(null);
+    setIsFormModalOpen(true);
+  };
 
   // Memoize displayed products to prevent recalculation
   const displayedProducts = useMemo(() => {
@@ -129,15 +248,37 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white pb-24">
-      {/* Header */}
+      {/* Header with Add Button */}
       <div className="bg-gray-900/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
-            All Products
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Browse our complete collection ({products.length} products)
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Brand Dashboard
+              </h1>
+              <p className="text-gray-400 text-sm mt-1">
+                Manage your product inventory ({products.length} products)
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => {/* TODO: Link to Grafana dashboard */}}
+                variant="outline"
+                className="bg-transparent hover:bg-gray-800 text-gray-300 hover:text-white px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-all border border-gray-700 hover:border-gray-600"
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="hidden sm:inline">Open Analytics</span>
+              </Button>
+              <Button
+                onClick={handleAddNew}
+                variant="secondary"
+                className="bg-purple-900/80 hover:bg-purple-800/80 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-semibold transition-all hover:scale-105 shadow-lg border border-purple-700/50 hover:border-purple-600/50"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Add Product</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -164,8 +305,16 @@ function Dashboard() {
         )}
 
         {!isLoading && !isError && products.length === 0 && (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-gray-400 text-lg">No products available</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-gray-400 text-lg mb-4">No products yet</p>
+            <Button
+              onClick={handleAddNew}
+              variant="secondary"
+              className="bg-purple-900/80 hover:bg-purple-800/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 border border-purple-700/50 hover:border-purple-600/50"
+            >
+              <Plus className="w-5 h-5" />
+              Add Your First Product
+            </Button>
           </div>
         )}
 
@@ -177,6 +326,8 @@ function Dashboard() {
                   key={product.id}
                   product={product}
                   onProductClick={handleProductClick}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -204,6 +355,40 @@ function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Modals */}
+      <ProductFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        onSubmit={handleFormSubmit}
+        product={selectedProduct}
+        isLoading={createMutation.isLoading || updateMutation.isLoading}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        productName={productToDelete?.name}
+        isLoading={deleteMutation.isLoading}
+      />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50">
