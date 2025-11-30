@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 import requests
 from supabase_client import SUPABASE_URL, SUPABASE_KEY
 from services.embedding_client import embed_product
@@ -95,3 +95,49 @@ def send_to_supabase():
     """Test endpoint to add products to Supabase"""
     __add_to_supabase()
     return jsonify({"status": "Products added to Supabase successfully."})
+
+
+@products_bp.get("/search")
+def search_products():
+    """Search products by name, description, category, or tags"""
+    query = request.args.get("q", "").strip()
+    
+    if not query:
+        return jsonify({"error": "Search query is required"}), 400
+    
+    try:
+        from supabase import create_client, Client
+
+        if not SUPABASE_URL or not SUPABASE_KEY:
+            raise ValueError("Supabase URL or Key is not set.")
+
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        
+        # Search in name, description, category, and tags
+        # Using ilike for case-insensitive search
+        query_pattern = f"%{query}%"
+        
+        response = (
+            supabase.table("products")
+            .select("id, external_id, name, description, price, category, image_url, tags, created_at")
+            .or_(f"name.ilike.{query_pattern},description.ilike.{query_pattern},category.ilike.{query_pattern}")
+            .execute()
+        )
+        
+        # Also filter by tags client-side (since Supabase array search can be tricky)
+        results = response.data
+        query_lower = query.lower()
+        
+        # Add products that match in tags
+        all_products = get_products_from_supabase()
+        for product in all_products:
+            if product not in results:
+                tags = product.get("tags", [])
+                if tags and any(query_lower in tag.lower() for tag in tags):
+                    results.append(product)
+        
+        return jsonify({"products": results, "count": len(results)})
+    
+    except Exception as e:
+        print(f"Search error: {e}")
+        return jsonify({"error": str(e)}), 500
