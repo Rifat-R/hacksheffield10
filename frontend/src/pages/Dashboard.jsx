@@ -1,16 +1,19 @@
 import { useState, useMemo, memo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Home, Info } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
+import { Home, Plus, Edit2, Trash2, BarChart3, Package, CheckCircle, XCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import ProductFormModal from '../components/ProductFormModal';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import Toast from '../components/Toast';
+import { api } from '../lib/api';
 
 // Memoized product card component to prevent unnecessary re-renders
-const ProductCard = memo(({ product, onProductClick }) => {
+const ProductCard = memo(({ product, onEdit, onDelete }) => {
   return (
     <div
-      onClick={() => onProductClick(product.id)}
-      className="group cursor-pointer"
+      className="group"
     >
       <div className="relative rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/20 h-[480px] flex flex-col">
         {/* Product Image */}
@@ -21,11 +24,11 @@ const ProductCard = memo(({ product, onProductClick }) => {
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-gray-900/95" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-gray-900/95" />
           
           {/* Top Info - Price Badge */}
           <div className="absolute top-4 right-4">
-            <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base font-bold">
+            <Badge variant="secondary" className="backdrop-blur-md shadow-lg text-base font-bold px-2 py-1">
               ${product.price}
             </Badge>
           </div>
@@ -33,7 +36,7 @@ const ProductCard = memo(({ product, onProductClick }) => {
           {/* Category Badge */}
           {product.category && (
             <div className="absolute top-4 left-4">
-              <Badge variant="default" className="backdrop-blur-md shadow-lg">
+              <Badge variant="default" className="backdrop-blur-md shadow-lg px-2 py-1">
                 {product.category}
               </Badge>
             </div>
@@ -75,11 +78,29 @@ const ProductCard = memo(({ product, onProductClick }) => {
             </div>
           )}
 
-          {/* View Details Link */}
-          <div className="mt-4 pt-3 border-t border-gray-800">
-            <div className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-1.5 transition-colors font-medium">
-              <Info className="w-4 h-4" />
-              View details
+          {/* Action Buttons */}
+          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(product);
+                }}
+                className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                title="Edit product"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(product);
+                }}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Delete product"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -100,8 +121,17 @@ const fetchProducts = async () => {
 };
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [displayCount, setDisplayCount] = useState(24);
+  
+  // Modal states
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
+  
+  // Toast state
+  const [toast, setToast] = useState(null);
 
   // Use React Query for caching and automatic refetching
   const { data: products = [], isLoading, error, isError } = useQuery({
@@ -112,14 +142,101 @@ function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+  // Create product mutation
+  const createMutation = useMutation({
+    mutationFn: (productData) => api.createProduct(productData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsFormModalOpen(false);
+      setSelectedProduct(null);
+      showToast('Product created successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to create product', 'error');
+    },
+  });
+
+  // Update product mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => api.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsFormModalOpen(false);
+      setSelectedProduct(null);
+      showToast('Product updated successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to update product', 'error');
+    },
+  });
+
+  // Delete product mutation
+  const deleteMutation = useMutation({
+    mutationFn: (productId) => api.deleteProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-products']);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+      showToast('Product deleted successfully!', 'success');
+    },
+    onError: (error) => {
+      showToast(error.message || 'Failed to delete product', 'error');
+    },
+  });
+
+  // Show toast notification
+  const showToast = (message, type) => {
+    setToast({ message, type });
+  };
+
+  // Handle form submission
+  const handleFormSubmit = (formData) => {
+    if (selectedProduct) {
+      // Update existing product
+      updateMutation.mutate({ id: selectedProduct.id, data: formData });
+    } else {
+      // Create new product
+      createMutation.mutate(formData);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = () => {
+    if (productToDelete) {
+      deleteMutation.mutate(productToDelete.id);
+    }
+  };
+
+  // Handle edit action
+  const handleEdit = (product) => {
+    setSelectedProduct(product);
+    setIsFormModalOpen(true);
+  };
+
+  // Handle delete action
+  const handleDelete = (product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle add new product
+  const handleAddNew = () => {
+    setSelectedProduct(null);
+    setIsFormModalOpen(true);
+  };
+
   // Memoize displayed products to prevent recalculation
   const displayedProducts = useMemo(() => {
     return products.slice(0, displayCount);
   }, [products, displayCount]);
 
-  const handleProductClick = (productId) => {
-    navigate(`/product/${productId}`);
-  };
+  // Calculate stats
+  const stats = useMemo(() => {
+    const total = products.length;
+    const active = products.filter(p => p.status === 'active' || !p.status).length;
+    const inactive = products.filter(p => p.status === 'inactive').length;
+    return { total, active, inactive };
+  }, [products]);
 
   const handleLoadMore = () => {
     setDisplayCount(prev => Math.min(prev + 24, products.length));
@@ -128,21 +245,88 @@ function Dashboard() {
   const hasMore = displayCount < products.length;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white pb-24">
-      {/* Header */}
-      <div className="bg-gray-900/50 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
+    <div className="h-screen flex flex-col overflow-hidden bg-gray-950 text-white">
+      {/* Header with Add Button */}
+      <div className="bg-gray-900/50 backdrop-blur-md border-b border-gray-800 shrink-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
-            All Products
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Browse our complete collection ({products.length} products)
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Brand Dashboard
+              </h1>
+              <p className="text-gray-400 text-sm mt-1">
+                Manage your product inventory ({products.length} products)
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => {/* TODO: Link to Grafana dashboard */}}
+                className="font-semibold"
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="hidden sm:inline">Open Analytics</span>
+              </Button>
+              <Button
+                onClick={handleAddNew}
+                variant="secondary"
+                className="bg-purple-900/80 hover:bg-purple-800/80 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-semibold transition-all hover:scale-105 shadow-lg border border-purple-700/50 hover:border-purple-600/50"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Add Product</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Stats Bento Grid */}
+        {!isLoading && !isError && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {/* Total Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-purple-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Total Products</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.total}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-purple-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Active Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-green-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Active</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.active}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Inactive Products */}
+            <div className="bg-gray-900/50 backdrop-blur-md border border-gray-800 rounded-xl p-6 hover:border-red-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Inactive</p>
+                  <p className="text-3xl font-bold text-white mt-2">{stats.inactive}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
+                  <XCircle className="w-6 h-6 text-red-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
@@ -164,8 +348,16 @@ function Dashboard() {
         )}
 
         {!isLoading && !isError && products.length === 0 && (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-gray-400 text-lg">No products available</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-gray-400 text-lg mb-4">No products yet</p>
+            <Button
+              onClick={handleAddNew}
+              variant="secondary"
+              className="bg-purple-900/80 hover:bg-purple-800/80 text-white px-6 py-3 rounded-lg flex items-center gap-2 border border-purple-700/50 hover:border-purple-600/50"
+            >
+              <Plus className="w-5 h-5" />
+              Add Your First Product
+            </Button>
           </div>
         )}
 
@@ -176,7 +368,8 @@ function Dashboard() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onProductClick={handleProductClick}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -189,7 +382,8 @@ function Dashboard() {
                 </p>
                 <Button
                   onClick={handleLoadMore}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-10 py-4 rounded-lg text-lg font-semibold transition-all hover:scale-105 shadow-lg hover:shadow-purple-500/50"
+                  size="lg"
+                  className="font-semibold"
                 >
                   Load More Products
                 </Button>
@@ -203,10 +397,45 @@ function Dashboard() {
             )}
           </>
         )}
+        </div>
       </div>
 
+      {/* Modals */}
+      <ProductFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        onSubmit={handleFormSubmit}
+        product={selectedProduct}
+        isLoading={createMutation.isLoading || updateMutation.isLoading}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        productName={productToDelete?.name}
+        isLoading={deleteMutation.isLoading}
+      />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      )}
+
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50">
+      <nav className="shrink-0 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 z-50">
         <div className="max-w-md mx-auto px-6 py-4">
           <div className="flex justify-center">
             <Link
