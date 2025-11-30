@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, Heart, ShoppingCart, Trash2, Home, Bookmark, User, Map } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProfileStore } from '../state/useProfileStore';
 import { useCheckoutStore } from '../state/useCheckoutStore';
@@ -12,9 +12,12 @@ export default function SavedItems() {
   const { savedItems, removeSavedItem } = useProfileStore();
   const { addToCart } = useCheckoutStore();
   const [removingId, setRemovingId] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const handleAddToCart = (product) => {
     addToCart(product);
+    setNotification({ type: 'cart', product });
+    setTimeout(() => setNotification(null), 2000);
   };
 
   const handleRemove = (productId) => {
@@ -26,7 +29,28 @@ export default function SavedItems() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col relative">
+      {/* Notification Alert */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[200] pointer-events-none"
+          >
+            <div className="px-6 py-3 rounded-xl shadow-2xl backdrop-blur-md border-2 flex items-center gap-3 bg-purple-500/20 border-purple-400 text-purple-100">
+              <ShoppingCart className="w-5 h-5 fill-current" />
+              <div>
+                <p className="font-bold text-sm">🛒 Added to Cart!</p>
+                <p className="text-xs opacity-90">{notification.product.name}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="px-4 py-2 sm:py-3 md:py-4 sm:px-6 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 sticky top-0 z-10 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
@@ -44,7 +68,7 @@ export default function SavedItems() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
         <div className="px-4 py-4 sm:px-6 sm:py-6 md:py-8">
         <div className="max-w-6xl mx-auto">
           {savedItems.length === 0 ? (
@@ -88,11 +112,11 @@ export default function SavedItems() {
                       {/* Tag and Price */}
                       <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
                         {product.tag && (
-                          <Badge variant="default" className="backdrop-blur-md shadow-lg">
+                          <Badge variant="default" className="backdrop-blur-md shadow-lg px-3 py-1">
                             {product.tag}
                           </Badge>
                         )}
-                        <Badge variant="secondary" className="backdrop-blur-md shadow-lg font-bold">
+                        <Badge variant="secondary" className="backdrop-blur-md shadow-lg font-bold px-3 py-1">
                           ${product.price}
                         </Badge>
                       </div>
@@ -151,6 +175,32 @@ export default function SavedItems() {
         </div>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg">
+        <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
+          <Link to="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Home className="w-6 h-6" />
+            <span className="text-xs font-medium">Feed</span>
+          </Link>
+          <Link to="/saved" className="flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
+            <Bookmark className="w-6 h-6" />
+            <span className="text-xs font-medium">Saved</span>
+          </Link>
+          <Link to="/explore" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <Map className="w-6 h-6" />
+            <span className="text-xs font-medium">Explore</span>
+          </Link>
+          <Link to="/checkout" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <ShoppingCart className="w-6 h-6" />
+            <span className="text-xs font-medium">Cart</span>
+          </Link>
+          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
+            <User className="w-6 h-6" />
+            <span className="text-xs font-medium">Profile</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }

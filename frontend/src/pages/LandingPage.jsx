@@ -243,7 +243,7 @@ export default function LandingPage() {
       </section>
 
       {/* Live Preview Strip */}
-      <section className="py-8 md:py-10 lg:py-12 px-4 overflow-hidden">
+      <section className="py-8 md:py-10 lg:py-12 px-4 overflow-visible">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0 }}
@@ -259,7 +259,7 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overflow-y-visible">
             {previewProducts.length === 0 ? (
               <p className="text-gray-400">Products are loading...</p>
             ) : (
@@ -273,7 +273,7 @@ export default function LandingPage() {
                   whileHover={{ scale: 1.05 }}
                   className="flex-shrink-0 w-64"
                 >
-                  <Card className="overflow-hidden hover:border-purple-500/50 transition-all cursor-pointer">
+                  <Card className="overflow-visible hover:border-purple-500/50 transition-all cursor-pointer">
                     <div className="aspect-square overflow-hidden bg-gray-800">
                       <img
                         src={product.image_url || product.media?.[0]?.url || 'https://via.placeholder.com/300?text=No+Image'}

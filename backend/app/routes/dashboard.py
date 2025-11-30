@@ -1,8 +1,7 @@
 from flask import Blueprint, jsonify, request
 from db_service import get_all, get_by_id, create_record, update_record, delete_record
 from .products import get_products_from_supabase
-from supabase_client import supabase
-
+from services.embedding_client import embed_product
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
@@ -22,20 +21,42 @@ def fetch_one(product_id):
 
 @dashboard_bp.route("/products", methods=["POST"])
 def create():
-    data = request.json
-    record = create_record("products", data)
-    return jsonify(record), 201
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        embedding = embed_product(data)
+        data["embedding"] = embedding
+        record = create_record("products", data)
+        return jsonify(record), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @dashboard_bp.route("/products/<int:product_id>", methods=["PUT"])
 def update(product_id):
-    updates = request.json
-    record = update_record("products", product_id, updates)
-    return jsonify(record)
+    try:
+        updates = request.json
+        if not updates:
+            return jsonify({"error": "No data provided"}), 400
+        embedding = embed_product(updates)
+        updates["embedding"] = embedding
+        record = update_record("products", product_id, updates)
+        if not record:
+            return jsonify({"error": "Product not found"}), 404
+        return jsonify(record)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @dashboard_bp.route("/products/<int:product_id>", methods=["DELETE"])
 def delete(product_id):
-    record = delete_record("products", product_id)
-    return jsonify(record)
+    try:
+        record = delete_record("products", product_id)
+        if not record:
+            return jsonify({"error": "Product not found"}), 404
+        return jsonify({"message": "Product deleted successfully", "data": record})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
