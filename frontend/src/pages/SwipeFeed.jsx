@@ -316,6 +316,8 @@ export default function SwipeFeed() {
                 ? 'bg-purple-500/20 border-purple-400 text-purple-100'
                 : notification.type === 'unsaved'
                 ? 'bg-gray-500/20 border-gray-400 text-gray-100'
+                : notification.type === 'cart'
+                ? 'bg-blue-500/20 border-blue-400 text-blue-100'
                 : 'bg-red-500/20 border-red-400 text-red-100'
             }`}>
               {notification.type === 'like' ? (
@@ -324,6 +326,8 @@ export default function SwipeFeed() {
                 <Bookmark className="w-5 h-5 fill-current" />
               ) : notification.type === 'unsaved' ? (
                 <Bookmark className="w-5 h-5" />
+              ) : notification.type === 'cart' ? (
+                <ShoppingCart className="w-5 h-5 fill-current" />
               ) : (
                 <X className="w-5 h-5" />
               )}
@@ -332,6 +336,7 @@ export default function SwipeFeed() {
                   {notification.type === 'like' ? '👍 Liked!' : 
                    notification.type === 'saved' ? '💜 Saved & Added to Cart!' :
                    notification.type === 'unsaved' ? '🗑️ Removed from Saved' :
+                   notification.type === 'cart' ? '🛒 Added to Cart!' :
                    '❌ Passed'}
                 </p>
                 <p className="text-xs opacity-90">{notification.product.name}</p>
@@ -532,15 +537,21 @@ export default function SwipeFeed() {
           }`} />
         </Button>
 
-        <Link to="/checkout">
-          <Button
-            size="icon"
-            variant="outline"
-            className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
-          >
-            <ShoppingCart className="w-6 h-6 text-purple-500" />
-          </Button>
-        </Link>
+        <Button
+          size="icon"
+          variant="outline"
+          className="w-14 h-14 rounded-full border-2 border-purple-500 hover:bg-purple-500/20 hover:scale-110 transition-all duration-200 shadow-lg bg-gray-900/50 backdrop-blur-md"
+          onClick={() => {
+            if (currentProduct) {
+              addToCart(currentProduct);
+              setNotification({ type: 'cart', product: currentProduct });
+              setTimeout(() => setNotification(null), 2000);
+            }
+          }}
+          disabled={!currentProduct}
+        >
+          <ShoppingCart className="w-6 h-6 text-purple-500" />
+        </Button>
       </div>
 
       {/* Bottom Navigation */}
