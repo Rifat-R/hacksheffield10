@@ -90,7 +90,8 @@ def list_products():
     return jsonify(products)
 
 
-@products_bp.get("/supabase")
+@products_bp.get("/send-to-supabase")
 def send_to_supabase():
+    """Test endpoint to add products to Supabase"""
     __add_to_supabase()
     return jsonify({"status": "Products added to Supabase successfully."})

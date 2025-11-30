@@ -1,19 +1,27 @@
 import numpy as np
 from supabase_client import supabase
+from postgrest.exceptions import APIError
 
 EMBED_DIM = 768  # set this to match your actual embedding dimension
 
 
 def get_user_profile_embedding(user_id: int) -> np.ndarray | None:
     """Return the user's embedding as a NumPy array, or None if no profile yet."""
-    res = (
-        supabase.table("users")
-        .select("embedding")
-        .eq("user_id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    data = res.data
+    try:
+        res = (
+            supabase.table("users")
+            .select("embedding")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        data = res.data
+    except APIError as exc:
+        # PostgREST may raise 204 "Missing response" when no rows exist; treat as no profile.
+        if getattr(exc, "code", None) == "204" or "Missing response" in str(exc):
+            return None
+        raise
+
     if not data or data.get("embedding") is None:
         return None
     return np.array(data["embedding"], dtype=float)
@@ -21,13 +29,20 @@ def get_user_profile_embedding(user_id: int) -> np.ndarray | None:
 
 def get_seen_product_ids(user_id: int) -> set[int]:
     """Return a set of product_ids the user has already swiped on."""
-    res = (
-        supabase.table("user_products")
-        .select("product_id")
-        .eq("user_id", user_id)
-        .execute()
-    )
-    return {row["product_id"] for row in (res.data or [])}
+    try:
+        res = (
+            supabase.table("user_products")
+            .select("product_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        data = res.data or []
+    except APIError as exc:
+        if getattr(exc, "code", None) == "204" or "Missing response" in str(exc):
+            data = []
+        else:
+            raise
+    return {row["product_id"] for row in data}
 
 
 def get_candidate_products(exclude_ids: set[int], limit: int = 500) -> list[dict]:

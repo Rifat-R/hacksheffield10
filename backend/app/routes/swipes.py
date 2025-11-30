@@ -4,7 +4,7 @@ from supabase_client import supabase
 from helpers.algorithm import get_next_best_product
 
 
-swiped_bp = Blueprint("swipes", __name__, url_prefix="/")
+swiped_bp = Blueprint("swipes", __name__)
 
 
 ALPHA = 0.1  # learning rate; higher = adapt faster
@@ -72,10 +72,10 @@ def update_user_embedding(user_id: int, product_id: int, liked: bool):
     upsert_user_profile(user_id, u_new, liked_count)
 
 
-@swiped_bp.get("api/register-swipe")
+@swiped_bp.route("/register-swipe", methods=["POST"])
 def swipe():
-    data = request.get_json()
-    user_id = int(data["user_id"])
+    data = request.get_json(force=True) or {}
+    user_id = USER_ID
     product_id = int(data["product_id"])
     liked = bool(data["liked"])
 
@@ -97,10 +97,10 @@ def swipe():
     return jsonify({"status": "ok"})
 
 
-@swiped_bp.get("api/next-product")
+@swiped_bp.get("/next-product")
 def next_product():
-    user_id = int(request.args["user_id"])
-    product = get_next_best_product(user_id)
+    product = get_next_best_product(USER_ID)
     if product is None:
         return jsonify({"product": None, "message": "No more products available"}), 200
+
     return jsonify({"product": product})

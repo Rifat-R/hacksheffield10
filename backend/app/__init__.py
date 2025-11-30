@@ -15,6 +15,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(core_bp)
     app.register_blueprint(products_bp, url_prefix="/api/products")
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
-    app.register_blueprint(swiped_bp, url_prefix="/api/dashboard")
+    app.register_blueprint(swiped_bp, url_prefix="/api")
 
     return app
