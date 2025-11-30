@@ -13,7 +13,7 @@ export default function LandingPage() {
   const { isProfileComplete } = useProfileStore();
   
   // Determine where to send users based on profile completion
-  const startLink = isProfileComplete ? '/feed' : '/account-setup';
+  const startLink = isProfileComplete ? '/feed' : '/setup';
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -43,16 +43,16 @@ export default function LandingPage() {
   const previewProducts = products.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="h-screen overflow-y-auto bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[400px]">
         {/* Background Effects */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-700/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative container mx-auto px-4 py-20 md:py-32">
+        <div className="relative container mx-auto px-4 py-6 md:py-8 lg:py-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -63,20 +63,20 @@ export default function LandingPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm mb-6"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs sm:text-sm mb-3 sm:mb-4"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
               AI-Powered Product Discovery
             </motion.div>
 
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white mb-2 sm:mb-3 leading-tight">
               Swipe, Like, Shop
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
                 The Future of Shopping
               </span>
             </h1>
 
-            <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-4 sm:mb-6 max-w-2xl mx-auto">
               Discover products tailored to your style. Swipe through an endless feed of curated items, powered by AI.
             </p>
 
@@ -99,18 +99,18 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 px-4">
+      <section className="py-8 md:py-10 lg:py-12 px-4">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-6 md:mb-8"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
               How It Works
             </h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-sm sm:text-base md:text-lg">
               Three simple steps to your perfect shopping experience
             </p>
           </motion.div>
@@ -163,18 +163,18 @@ export default function LandingPage() {
       </section>
 
       {/* Brand Benefits Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-transparent to-purple-950/20">
+      <section className="py-8 md:py-10 lg:py-12 px-4 bg-gradient-to-b from-transparent to-purple-950/20">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-6 md:mb-8"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
               Built for Brands
             </h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-sm sm:text-base md:text-lg">
               Powerful analytics and AI-driven insights to grow your business
             </p>
           </motion.div>
@@ -243,18 +243,18 @@ export default function LandingPage() {
       </section>
 
       {/* Live Preview Strip */}
-      <section className="py-20 px-4 overflow-hidden">
+      <section className="py-8 md:py-10 lg:py-12 px-4 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-4 md:mb-6"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">
               Discover Amazing Products
             </h2>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-xs sm:text-sm md:text-base">
               Just a glimpse of what's waiting for you
             </p>
           </motion.div>
@@ -299,9 +299,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-12 px-4">
+      <footer className="border-t border-gray-800 py-6 md:py-8 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-4 md:gap-6 mb-4 md:mb-6">
             <div>
               <h3 className="text-white font-bold text-xl mb-4">Swipey</h3>
               <p className="text-gray-400 text-sm">
@@ -332,7 +332,7 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+          <div className="border-t border-gray-800 pt-3 md:pt-4 text-center text-gray-500 text-xs sm:text-sm">
             © 2025 Swipey. All rights reserved.
           </div>
         </div>

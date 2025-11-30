@@ -89,7 +89,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
@@ -97,8 +97,8 @@ export default function Profile() {
       </div>
 
       {/* Header */}
-      <div className="relative border-b border-gray-800 backdrop-blur-xl bg-gray-900/50">
-        <div className="container mx-auto px-4 py-4">
+      <div className="relative border-b border-gray-800 backdrop-blur-xl bg-gray-900/50 flex-shrink-0">
+        <div className="container mx-auto px-4 py-2 sm:py-3 md:py-4">
           <div className="flex items-center justify-between">
             <Link to="/feed">
               <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
@@ -113,7 +113,8 @@ export default function Profile() {
       </div>
 
       {/* Content */}
-      <div className="relative container mx-auto px-4 py-8 max-w-3xl">
+      <div className="relative flex-1 overflow-y-auto min-h-0">
+        <div className="container mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-3xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -337,6 +338,7 @@ export default function Profile() {
             </CardContent>
           </Card>
         </motion.div>
+        </div>
       </div>
     </div>
   );

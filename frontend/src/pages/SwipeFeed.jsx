@@ -265,7 +265,7 @@ export default function SwipeFeed() {
   const currentProduct = products[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+    <div className="h-screen bg-gray-950 flex flex-col relative overflow-hidden">
       {/* Welcome Alert */}
       <AnimatePresence>
         {showWelcome && (
@@ -369,10 +369,10 @@ export default function SwipeFeed() {
       />
 
       {/* Header */}
-      <header className="px-4! py-4 sm:px-6 sm:py-5 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
+      <header className="px-4! py-2 sm:py-3 md:py-4 sm:px-6 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Swipey</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Swipey</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
           <div className="flex gap-3 sm:gap-4 items-center">
@@ -394,8 +394,8 @@ export default function SwipeFeed() {
       </header>
 
       {/* Card Stack */}
-      <div className="flex-1 flex items-center justify-center px-6 py-6 sm:px-8 sm:py-8 ">
-        <div className="relative w-full max-w-md aspect-[3/4]">
+      <div className="flex-1 flex items-center justify-center px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 min-h-0">
+        <div className="relative w-full max-w-md aspect-[3/4] max-h-[calc(100vh-200px)]">
           <AnimatePresence mode="popLayout">
             {loading && products.length === 0 ? (
               <motion.div
@@ -544,8 +544,8 @@ export default function SwipeFeed() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg">
-        <div className="max-w-md mx-auto flex justify-around py-3 px-4">
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg flex-shrink-0">
+        <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
           <Link to="/feed" className="flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
             <Home className="w-6 h-6" />
             <span className="text-xs font-medium">Feed</span>

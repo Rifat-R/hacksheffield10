@@ -28,7 +28,7 @@ export default function Checkout() {
 
   if (orderComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center px-4">
+      <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -59,9 +59,9 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-40 flex-shrink-0">
         <div className="container mx-auto px-4 py-4 max-w-6xl">
           <div className="flex items-center justify-between">
             <Link to="/feed" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
@@ -74,7 +74,8 @@ export default function Checkout() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="container mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-6xl">
         {displayItems.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -242,6 +243,7 @@ export default function Checkout() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

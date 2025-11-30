@@ -79,7 +79,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-300">
+      <div className="h-screen bg-gray-950 flex items-center justify-center text-gray-300">
         Loading product...
       </div>
     );
@@ -87,7 +87,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="h-screen bg-gray-950 flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle>Product not found</CardTitle>
@@ -107,7 +107,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
       {/* Added to Cart Notification */}
       <AnimatePresence>
         {showAddedNotification && (
@@ -130,7 +130,7 @@ export default function ProductDetail() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-gray-800">
+      <header className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-gray-800 flex-shrink-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -157,7 +157,8 @@ export default function ProductDetail() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 md:py-8">
         <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
           {/* Image Gallery */}
           <div className="space-y-4">
@@ -260,6 +261,7 @@ export default function ProductDetail() {
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
