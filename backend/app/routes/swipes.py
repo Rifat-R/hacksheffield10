@@ -159,7 +159,9 @@ def swipe():
 
 @swiped_bp.get("/next-product")
 def next_product():
+
     product = get_next_best_product(USER_ID)
+
     if product is None:
         return jsonify({"product": None, "message": "No more products available"}), 200
 

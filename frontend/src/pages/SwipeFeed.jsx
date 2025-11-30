@@ -129,6 +129,7 @@ export default function SwipeFeed() {
   const [notification, setNotification] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const viewStartTime = useRef(null);
+  const lastSwipedId = useRef(null);
 
   const { addLike, addPass, likes, passes } = useFeedStore();
   const { hasSeenWelcome, markWelcomeSeen, name, addSavedItem, removeSavedItem, isItemSaved } = useProfileStore();
@@ -171,14 +172,14 @@ export default function SwipeFeed() {
     setTimeout(() => setNotification(null), 2000);
   };
 
-  const fetchNextProduct = async () => {
+  const fetchNextProduct = async (excludeIds) => {
     if (fetchingNext) return;
     setFetchingNext(true);
     if (products.length === 0) {
       setLoading(true);
     }
     try {
-      const res = await api.getNextProduct();
+      const res = await api.getNextProduct(excludeIds);
       const next = res.product || res;
       if (next) {
         setProducts((prev) => [...prev, normalizeProduct(next, prev.length)]);
@@ -193,7 +194,11 @@ export default function SwipeFeed() {
 
   const ensureBuffer = (target = 2) => {
     if (products.length < target && !fetchingNext) {
-      fetchNextProduct();
+      const excludeIds = [
+        ...products.map((p) => p.id).filter(Boolean),
+        lastSwipedId.current,
+      ].filter(Boolean);
+      fetchNextProduct(excludeIds);
     }
   };
 
@@ -204,6 +209,7 @@ export default function SwipeFeed() {
   const handleSwipe = (direction) => {
     const product = products[0];
     if (!product) return;
+    lastSwipedId.current = product.id;
 
     // Trigger edge lighting effect immediately
     setSwipeDirection(direction);
@@ -239,8 +245,12 @@ export default function SwipeFeed() {
 
     viewStartTime.current = Date.now();
 
-    // Keep buffer filled
-    ensureBuffer(3);
+    // Immediately fetch another product without waiting on swipe persistence
+    const excludeIds = [
+      product.id,
+      ...products.slice(1).map((p) => p.id).filter(Boolean),
+    ];
+    fetchNextProduct(excludeIds);
   };
 
   const currentProduct = products[0];

@@ -62,7 +62,7 @@ def get_seen_product_ids(user_id: int) -> set[int]:
     return {row["product_id"] for row in data}
 
 
-def get_candidate_products(exclude_ids: set[int], limit: int = 500) -> list[dict]:
+def get_candidate_products(exclude_ids: list[int], limit: int = 500) -> list[dict]:
     """
     Fetch candidate products the user hasn't seen yet.
     For simplicity we just take up to `limit` items.
@@ -88,6 +88,9 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / denom)
 
 
+seen = {}
+
+
 def get_next_best_product(user_id: int) -> dict | None:
     """
     Returns the single best next product for a user as a dict,
@@ -102,18 +105,12 @@ def get_next_best_product(user_id: int) -> dict | None:
       * just return a random/popular unseen product
     """
     user_embedding = get_user_profile_embedding(user_id)
-    seen_ids = get_seen_product_ids(user_id)
 
     # Get candidates (unseen products)
-    candidates = get_candidate_products(exclude_ids=seen_ids, limit=500)
+    candidates = get_candidate_products(exclude_ids=seen.keys(), limit=500)  # type: ignore
+
     if not candidates:
         return None  # no products left to show
-
-    # Cold start: user has no embedding yet
-    if user_embedding is None:
-        # simplest: just return the first candidate (or random)
-        # You can sort by global popularity or created_at if you want.
-        return candidates[0]
 
     # Compute similarity for each candidate and pick the best
     best_product = None
@@ -129,9 +126,12 @@ def get_next_best_product(user_id: int) -> dict | None:
             # skip if dimension doesn’t match
             continue
 
-        score = cosine_similarity(user_embedding, p_emb)
-        if score > best_score:
+        score = cosine_similarity(user_embedding, p_emb)  # type: ignore
+        if score > best_score and seen.get(product["id"], False) is False:
             best_score = score
             best_product = product
+
+    if best_product:
+        seen[best_product["id"]] = True
 
     return best_product
