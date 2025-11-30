@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { Heart, X, Info, Home, Bookmark, User, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -21,7 +21,7 @@ const SWIPE_THRESHOLD = 80;
 const EXIT_ANIMATION_DURATION = 500;
 // ========================================
 
-function ProductCard({ product, onSwipe, onDetail }) {
+const ProductCard = forwardRef(function ProductCard({ product, onSwipe, onDetail }, ref) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-20, 20]);
 
@@ -46,6 +46,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
 
   return (
     <motion.div
+      ref={ref}
       className="absolute w-full h-full cursor-grab active:cursor-grabbing"
       style={{ x, rotate, zIndex: isExiting ? 20 : 10 }}
       drag="x"
@@ -118,7 +119,7 @@ function ProductCard({ product, onSwipe, onDetail }) {
       </div>
     </motion.div>
   );
-}
+});
 
 export default function SwipeFeed() {
   const [products, setProducts] = useState([]);
@@ -173,6 +174,9 @@ export default function SwipeFeed() {
   const fetchNextProduct = async () => {
     if (fetchingNext) return;
     setFetchingNext(true);
+    if (products.length === 0) {
+      setLoading(true);
+    }
     try {
       const res = await api.getNextProduct();
       const next = res.product || res;
@@ -224,14 +228,6 @@ export default function SwipeFeed() {
 
     // Remove the swiped product
     setProducts((prev) => prev.slice(1));
-
-    // Track view duration (non-blocking)
-    if (viewStartTime.current) {
-      const duration = Date.now() - viewStartTime.current;
-      api.recordView(product.id, duration).catch(error => {
-        console.error('Failed to record view:', error);
-      });
-    }
 
     // Record swipe (non-blocking)
     api.registerSwipe({

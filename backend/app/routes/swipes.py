@@ -22,8 +22,15 @@ def get_product_embedding(product_id: int) -> np.ndarray:
     data = res.data
     if not data or data.get("embedding") is None:
         raise ValueError("Product embedding not found")
+    raw = data["embedding"]
+    if isinstance(raw, str):
+        try:
+            import json
+            raw = json.loads(raw)
+        except Exception:
+            raise ValueError("Product embedding is stored as a string that could not be parsed.")
     # Supabase returns arrays as Python lists
-    return np.array(data["embedding"], dtype=float)
+    return np.array(raw, dtype=float)
 
 
 def get_user_profile(user_id: int):
