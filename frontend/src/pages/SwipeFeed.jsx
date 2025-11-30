@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { Heart, X, Info, Home, Bookmark, User, ShoppingCart, Map } from 'lucide-react';
+import { Heart, X, Info, Home, Bookmark, User, ShoppingCart, Map, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFeedStore } from '../state/useFeedStore';
 import { useProfileStore } from '../state/useProfileStore';
@@ -128,6 +128,10 @@ export default function SwipeFeed() {
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [notification, setNotification] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const viewStartTime = useRef(null);
   const lastSwipedId = useRef(null);
 
@@ -253,6 +257,41 @@ export default function SwipeFeed() {
     fetchNextProduct(excludeIds);
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setSearching(true);
+    try {
+      const response = await api.searchProducts(searchQuery);
+      const results = response.products || [];
+      setSearchResults(results.map((p, idx) => normalizeProduct(p, idx)));
+    } catch (error) {
+      console.error('Search failed:', error);
+      setNotification({ type: 'error', product: { name: 'Search failed. Please try again.' } });
+      setTimeout(() => setNotification(null), 2000);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleLoadSearchResults = () => {
+    if (searchResults.length > 0) {
+      // Replace current feed with search results
+      setProducts(searchResults);
+      setShowSearch(false);
+      setSearchQuery('');
+      setSearchResults([]);
+      setNotification({ type: 'search', product: { name: `Loaded ${searchResults.length} search results` } });
+      setTimeout(() => setNotification(null), 2000);
+    }
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const currentProduct = products[0];
 
   return (
@@ -290,6 +329,128 @@ export default function SwipeFeed() {
         )}
       </AnimatePresence>
 
+      {/* Search Modal */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-20"
+            onClick={() => setShowSearch(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: -20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: -20 }}
+              className="bg-gray-900 border-2 border-purple-500/50 rounded-2xl shadow-2xl w-full max-w-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <Search className="w-6 h-6 text-purple-500" />
+                    Search Products
+                  </h3>
+                  <button
+                    onClick={() => setShowSearch(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={handleSearchKeyPress}
+                      placeholder="Search by name, category, or tags..."
+                      className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                      autoFocus
+                    />
+                    <Button
+                      onClick={handleSearch}
+                      disabled={!searchQuery.trim() || searching}
+                      className="px-6 bg-purple-600 hover:bg-purple-700"
+                    >
+                      {searching ? 'Searching...' : 'Search'}
+                    </Button>
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-gray-400 text-sm">
+                          Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''}
+                        </p>
+                        <Button
+                          onClick={handleLoadSearchResults}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Load to Feed
+                        </Button>
+                      </div>
+                      
+                      <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+                        {searchResults.map((product) => (
+                          <motion.div
+                            key={product.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-purple-500/50 transition-all flex gap-3"
+                          >
+                            <img
+                              src={getProductImage(product) || 'https://via.placeholder.com/100?text=Product'}
+                              alt={product.name}
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-white font-semibold text-sm truncate">
+                                {product.name}
+                              </h4>
+                              <p className="text-gray-400 text-xs line-clamp-2 mt-1">
+                                {product.description}
+                              </p>
+                              <div className="flex items-center justify-between mt-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {product.category}
+                                </Badge>
+                                <span className="text-purple-400 font-bold text-sm">
+                                  ${product.price}
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {searching && (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">Searching...</p>
+                    </div>
+                  )}
+
+                  {!searching && searchQuery && searchResults.length === 0 && (
+                    <div className="text-center py-8">
+                      <Search className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+                      <p className="text-gray-400">No products found</p>
+                      <p className="text-gray-500 text-sm mt-1">Try a different search term</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Notification Alert */}
       <AnimatePresence>
         {notification && (
@@ -306,7 +467,11 @@ export default function SwipeFeed() {
                 ? 'bg-purple-500/20 border-purple-400 text-purple-100'
                 : notification.type === 'unsaved'
                   ? 'bg-gray-500/20 border-gray-400 text-gray-100'
-                  : 'bg-red-500/20 border-red-400 text-red-100'
+                  : notification.type === 'search'
+                    ? 'bg-blue-500/20 border-blue-400 text-blue-100'
+                    : notification.type === 'error'
+                      ? 'bg-orange-500/20 border-orange-400 text-orange-100'
+                      : 'bg-red-500/20 border-red-400 text-red-100'
               }`}>
               {notification.type === 'like' ? (
                 <Heart className="w-5 h-5 fill-current" />
@@ -314,6 +479,10 @@ export default function SwipeFeed() {
                 <Bookmark className="w-5 h-5 fill-current" />
               ) : notification.type === 'unsaved' ? (
                 <Bookmark className="w-5 h-5" />
+              ) : notification.type === 'search' ? (
+                <Search className="w-5 h-5" />
+              ) : notification.type === 'error' ? (
+                <Info className="w-5 h-5" />
               ) : (
                 <X className="w-5 h-5" />
               )}
@@ -322,7 +491,9 @@ export default function SwipeFeed() {
                   {notification.type === 'like' ? '👍 Liked!' :
                     notification.type === 'saved' ? '💜 Saved & Added to Cart!' :
                       notification.type === 'unsaved' ? '🗑️ Removed from Saved' :
-                        '❌ Passed'}
+                        notification.type === 'search' ? '🔍 Search Results Loaded' :
+                          notification.type === 'error' ? '⚠️ Error' :
+                            '❌ Passed'}
                 </p>
                 <p className="text-xs opacity-90">{notification.product.name}</p>
               </div>
@@ -366,6 +537,12 @@ export default function SwipeFeed() {
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
           <div className="flex gap-3 sm:gap-4 items-center">
+            <button
+              onClick={() => setShowSearch(true)}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Search className="w-6 h-6" />
+            </button>
             <Link to="/" className="text-gray-400 hover:text-white transition-colors">
               <Info className="w-6 h-6" />
             </Link>
