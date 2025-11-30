@@ -305,12 +305,20 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center mt-12"
           >
-            <Link to="/dashboard/products">
-              <Button size="xl" variant="outline" className="border-purple-500/50 hover:bg-purple-500/10">
-                Get Started as a Brand
-                <TrendingUp className="w-5 h-5" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/dashboard/products">
+                <Button size="xl" variant="outline" className="w-full sm:w-auto border-purple-500/50 hover:bg-purple-500/10">
+                  Get Started as a Brand
+                  <TrendingUp className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/dashboard/products">
+                <Button size="xl" className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 border-0 shadow-lg shadow-purple-500/30">
+                  Manage Dashboard
+                  <BarChart3 className="w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
