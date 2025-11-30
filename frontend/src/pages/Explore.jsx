@@ -1306,12 +1306,8 @@ export default function Explore() {
       </AnimatePresence>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg relative z-10 flex-shrink-0">
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg flex-shrink-0">
         <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
-          <Link to="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
-            <Home className="w-6 h-6" />
-            <span className="text-xs font-medium">Feed</span>
-          </Link>
           <Link to="/saved" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <Bookmark className="w-6 h-6" />
             <span className="text-xs font-medium">Saved</span>
@@ -1347,6 +1343,29 @@ export default function Explore() {
               />
             </Link>
           </motion.div>
+          <Link to="/feed" className="relative flex flex-col items-center gap-1 text-purple-400 py-2 px-4 rounded-lg">
+            {/* Glowing animated ring */}
+            <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-12 h-12 pointer-events-none z-0">
+              <span className="absolute inset-0 rounded-full bg-purple-500/30 blur-xl animate-pulse" />
+              <span className="absolute inset-1 rounded-full bg-purple-400/40 blur-lg animate-pulse" />
+            </span>
+            <span className="relative z-10">
+              <Home className="w-6 h-6 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)] animate-glow" />
+            </span>
+            <span className="relative z-10 font-bold animate-glow-text">Feed</span>
+            <style>{`
+              @keyframes glow {
+                0%, 100% { filter: drop-shadow(0 0 6px #a855f7) drop-shadow(0 0 12px #a855f7aa); }
+                50% { filter: drop-shadow(0 0 16px #a855f7) drop-shadow(0 0 32px #a855f7cc); }
+              }
+              .animate-glow { animation: glow 2s infinite alternate; }
+              @keyframes glowText {
+                0%, 100% { text-shadow: 0 0 6px #a855f7, 0 0 12px #a855f7aa; }
+                50% { text-shadow: 0 0 16px #a855f7, 0 0 32px #a855f7cc; }
+              }
+              .animate-glow-text { animation: glowText 2s infinite alternate; }
+            `}</style>
+          </Link>
           <Link to="/checkout" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <ShoppingCart className="w-6 h-6" />
             <span className="text-xs font-medium">Cart</span>
@@ -1357,6 +1376,7 @@ export default function Explore() {
           </Link>
         </div>
       </nav>
+      
     </div>
   );
 }
