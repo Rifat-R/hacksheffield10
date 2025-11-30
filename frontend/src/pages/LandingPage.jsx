@@ -43,59 +43,132 @@ export default function LandingPage() {
   const previewProducts = products.slice(0, 8);
 
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="h-screen w-full overflow-y-auto bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 scrollbar-hide">
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[400px]">
+      <section className="relative overflow-hidden min-h-screen flex items-center justify-center">
         {/* Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-700/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-700/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative container mx-auto px-4 py-6 md:py-8 lg:py-10">
+        <div className="relative container mx-auto px-4 py-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1, ease: "easeOut" }}
             className="text-center max-w-4xl mx-auto"
           >
+            {/* Glassmorphic Badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs sm:text-sm mb-3 sm:mb-4"
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl bg-white/5 border border-white/10 text-purple-300 text-sm mb-8 shadow-lg"
             >
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-              AI-Powered Product Discovery
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              <span className="font-medium">Embark on Your Style Journey</span>
             </motion.div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white mb-2 sm:mb-3 leading-tight">
-              Swipe, Like, Shop
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
-                The Future of Shopping
+            {/* Main Heading */}
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight tracking-tight"
+            >
+              Fashion
+              <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600">
+                Odyssey
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-4 sm:mb-6 max-w-2xl mx-auto">
-              Discover products tailored to your style. Swipe through an endless feed of curated items, powered by AI.
-            </p>
+            {/* Subtitle */}
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.8 }}
+              className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto font-light leading-relaxed"
+            >
+              Swipe. Discover. Style. Your personalized fashion journey awaits.
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={startLink}>
-                <Button size="xl" className="group">
-                  Start Swiping
-                  <Heart className="w-5 h-5 group-hover:fill-current transition-all" />
+            {/* CTA Buttons */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <Link to={startLink} className="w-full sm:w-auto">
+                <Button 
+                  size="xl" 
+                  className="w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 border-0 shadow-2xl shadow-purple-500/40 backdrop-blur-xl group transition-all duration-300"
+                >
+                  Begin Your Journey
+                  <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/dashboard/products">
-                <Button size="xl" variant="outline">
-                  For Brands
-                  <BarChart3 className="w-5 h-5" />
+              
+              <Link to="/explore" className="w-full sm:w-auto">
+                <Button 
+                  size="xl"
+                  variant="outline"
+                  className="w-full sm:w-auto text-lg px-8 py-6 backdrop-blur-xl bg-white/5 border-white/10 hover:bg-white/10 text-white shadow-lg"
+                >
+                  Explore Realms
+                  <Heart className="w-5 h-5" />
                 </Button>
               </Link>
-            </div>
+            </motion.div>
+
+            {/* Floating Cards Preview */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.8 }}
+              className="mt-20 grid grid-cols-3 gap-4 max-w-3xl mx-auto"
+            >
+              {['Minimalism', 'Streetwear', 'Academia'].map((realm, i) => (
+                <motion.div
+                  key={realm}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.3 + i * 0.1, duration: 0.6 }}
+                  whileHover={{ y: -8, scale: 1.05 }}
+                  className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl hover:shadow-purple-500/20 transition-all duration-300"
+                >
+                  <div className="text-3xl mb-3">
+                    {i === 0 ? '⚪' : i === 1 ? '🎨' : '📚'}
+                  </div>
+                  <h3 className="text-white font-semibold text-sm">{realm}</h3>
+                  <p className="text-gray-400 text-xs mt-1">Realm of Style</p>
+                </motion.div>
+              ))}
+            </motion.div>
           </motion.div>
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5, duration: 0.8 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="w-6 h-10 border-2 border-white/20 rounded-full flex items-start justify-center p-2"
+          >
+            <motion.div 
+              className="w-1.5 h-1.5 bg-purple-400 rounded-full"
+              animate={{ y: [0, 16, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* How It Works Section */}
@@ -303,7 +376,7 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-4 md:gap-6 mb-4 md:mb-6">
             <div>
-              <h3 className="text-white font-bold text-xl mb-4">Swipey</h3>
+              <h3 className="text-white font-bold text-xl mb-4">TrendSwipe</h3>
               <p className="text-gray-400 text-sm">
                 AI-powered shopping experience for the modern consumer.
               </p>
@@ -333,7 +406,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-3 md:pt-4 text-center text-gray-500 text-xs sm:text-sm">
-            © 2025 Swipey. All rights reserved.
+            © 2025 TrendSwipe. All rights reserved.
           </div>
         </div>
       </footer>

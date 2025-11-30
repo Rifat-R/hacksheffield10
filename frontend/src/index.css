@@ -7,6 +7,9 @@
 html,
 body {
   height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -20,7 +23,11 @@ body {
 
 #root {
   height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height for mobile browsers */
+  width: 100vw;
+  width: 100dvw; /* Use dynamic viewport width for mobile browsers */
   overflow: hidden;
+  position: relative;
 }
 
 /* Scrollbar Styles */

@@ -28,7 +28,7 @@ export default function Checkout() {
 
   if (orderComplete) {
     return (
-      <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center px-4">
+      <div className="h-screen w-full bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -59,7 +59,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
+    <div className="h-screen w-full bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-40 flex-shrink-0">
         <div className="container mx-auto px-4 py-4 max-w-6xl">
@@ -235,7 +235,7 @@ export default function Checkout() {
                     </Button>
 
                     <p className="text-xs text-gray-400 text-center">
-                      Secure checkout powered by Swipey
+                      Secure checkout powered by TrendSwipe
                     </p>
                   </CardContent>
                 </Card>

@@ -748,7 +748,7 @@ function RealmDetail({ realm, onClose, realmProgress, onCompleteQuest, onTrackVi
               {realm.name}
             </h2>
             <p className="text-white/90 text-lg">{realm.description}</p>
-            <p className="text-white/70 text-sm mt-2 italic">Part of your Fashion Odyssey</p>
+            <p className="text-white/70 text-sm mt-2 italic">Part of your TrendSwipe journey</p>
           </div>
           
           <button
@@ -962,7 +962,7 @@ export default function Explore() {
   const nextUnlockEssence = lockedRealms.length > 0 ? lockedRealms[0].unlockEssence : progress.totalEssence;
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col overflow-hidden relative">
+    <div className="h-screen w-full bg-gray-950 flex flex-col overflow-hidden relative">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Floating particles */}
@@ -1030,7 +1030,7 @@ export default function Explore() {
                 >
                   <Map className="w-6 h-6 text-purple-500" />
                 </motion.div>
-                Fashion Odyssey
+                TrendSwipe
               </motion.h1>
               <motion.p
                 initial={{ x: -20, opacity: 0 }}
@@ -1306,7 +1306,7 @@ export default function Explore() {
       </AnimatePresence>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg relative z-10">
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg relative z-10 flex-shrink-0">
         <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
           <Link to="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <Home className="w-6 h-6" />

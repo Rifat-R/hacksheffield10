@@ -265,7 +265,7 @@ export default function SwipeFeed() {
   const currentProduct = products[currentIndex];
 
   return (
-    <div className="h-screen bg-gray-950 flex flex-col relative overflow-hidden">
+    <div className="h-screen w-full bg-gray-950 flex flex-col relative overflow-hidden">
       {/* Welcome Alert */}
       <AnimatePresence>
         {showWelcome && (
@@ -377,7 +377,7 @@ export default function SwipeFeed() {
       <header className="px-4! py-2 sm:py-3 md:py-4 sm:px-6 border-b border-gray-800/50 backdrop-blur-sm bg-gray-900/50 ">
         <div className="max-w-md mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Swipey</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white">TrendSwipe</h1>
             <p className="text-xs sm:text-sm text-gray-400">Discover your style</p>
           </div>
           <div className="flex gap-3 sm:gap-4 items-center">

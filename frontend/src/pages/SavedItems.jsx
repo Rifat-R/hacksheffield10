@@ -29,7 +29,7 @@ export default function SavedItems() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col relative">
+    <div className="h-screen w-full bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 flex flex-col relative">
       {/* Notification Alert */}
       <AnimatePresence>
         {notification && (
@@ -177,7 +177,7 @@ export default function SavedItems() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg">
+      <nav className="border-t border-gray-800/50 bg-gray-900/80 backdrop-blur-lg flex-shrink-0">
         <div className="max-w-md mx-auto flex justify-around py-2 sm:py-3 px-4">
           <Link to="/feed" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-300 transition-colors py-2 px-4 rounded-lg hover:bg-gray-800/50">
             <Home className="w-6 h-6" />
