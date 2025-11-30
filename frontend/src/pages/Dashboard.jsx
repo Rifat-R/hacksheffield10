@@ -1,6 +1,6 @@
 import { useState, useMemo, memo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Home, Info, Plus, Edit2, Trash2, BarChart3, Package, CheckCircle, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Home, Plus, Edit2, Trash2, BarChart3, Package, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -10,11 +10,10 @@ import Toast from '../components/Toast';
 import { api } from '../lib/api';
 
 // Memoized product card component to prevent unnecessary re-renders
-const ProductCard = memo(({ product, onProductClick, onEdit, onDelete }) => {
+const ProductCard = memo(({ product, onEdit, onDelete }) => {
   return (
     <div
-      onClick={() => onProductClick(product.id)}
-      className="group cursor-pointer"
+      className="group"
     >
       <div className="relative rounded-3xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-purple-500/20 h-[480px] flex flex-col">
         {/* Product Image */}
@@ -80,11 +79,7 @@ const ProductCard = memo(({ product, onProductClick, onEdit, onDelete }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
-            <div className="text-sm text-purple-300 hover:text-purple-200 flex items-center gap-1.5 transition-colors font-medium">
-              <Info className="w-4 h-4" />
-              View details
-            </div>
+          <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-end">
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
@@ -126,7 +121,6 @@ const fetchProducts = async () => {
 };
 
 function Dashboard() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [displayCount, setDisplayCount] = useState(24);
   
@@ -243,10 +237,6 @@ function Dashboard() {
     const inactive = products.filter(p => p.status === 'inactive').length;
     return { total, active, inactive };
   }, [products]);
-
-  const handleProductClick = (productId) => {
-    navigate(`/product/${productId}`);
-  };
 
   const handleLoadMore = () => {
     setDisplayCount(prev => Math.min(prev + 24, products.length));
@@ -378,7 +368,6 @@ function Dashboard() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onProductClick={handleProductClick}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
