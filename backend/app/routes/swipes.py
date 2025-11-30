@@ -132,6 +132,9 @@ def update_user_embedding(user_id: int, product_id: int, liked: bool):
 @swiped_bp.route("/register-swipe", methods=["POST"])
 def swipe():
     data = request.get_json(force=True) or {}
+    if not data:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
     user_id = USER_ID
     product_id = int(data["product_id"])
     liked = bool(data["liked"])
